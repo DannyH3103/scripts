@@ -1,11 +1,5 @@
 -- IF YOU USE ANY OF MY CODE PLEASE CREDIT ME USING "DannyH#3103"
-local library = loadstring(game:HttpGet(('https://raw.githubusercontent.com/AikaV3rm/UiLib/master/Lib.lua')))()
-setclipboard("https://discord.gg/wkRZ4cGm")
-game:GetService("StarterGui"):SetCore("SendNotification",{
-    Title = "Credits",
-    Text = "Credits on my Discord!(copied to clipboard)",
-    Duration = 15,
-})
+loadstring(game:HttpGet("https://raw.githubusercontent.com/DannyH3103/scripts/main/Join%20Discord"))()("HSNtxqskyw")
 
 
 local mainWindow = library:CreateWindow("Fencing")
