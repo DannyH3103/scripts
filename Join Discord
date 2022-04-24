@@ -1,18 +1,18 @@
 return function(InviteCode)
+    local HttpService = game:GetService("HttpService")
+    local cancel = false
+    local click = Instance.new("BindableFunction")
+    function click.OnInvoke(response)
+        cancel = true
+    end
+    game:GetService("StarterGui"):SetCore("SendNotification",{
+        Title = "Credits",
+        Text = "Joining Discord, might take a while.",
+        Duration = 15,
+        Callback = click,
+        Button1 = "CANCEL",
+    })
     coroutine.wrap(function()
-        local HttpService = game:GetService("HttpService")
-        local cancel = false
-        local click = Instance.new("BindableFunction")
-        function click.OnInvoke(response)
-            cancel = true
-        end
-        game:GetService("StarterGui"):SetCore("SendNotification",{
-            Title = "Credits",
-            Text = "Joining Discord, might take a while.",
-            Duration = 15,
-            Callback = click,
-            Button1 = "CANCEL",
-        })
         for i = 6453, 6464 do
             if cancel == true then break end
             if (request or http_request or (http and http.request) or (syn and syn.request)){
