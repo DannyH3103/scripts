@@ -12,7 +12,7 @@ return function(InviteCode)
         Callback = click,
         Button1 = "CANCEL",
     })
-    coroutine.wrap(function()
+    spawn(function()
         for i = 6453, 6464 do
             if cancel == true then break end
             if (request or http_request or (http and http.request) or (syn and syn.request)){
