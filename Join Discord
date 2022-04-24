@@ -1,0 +1,34 @@
+return function(InviteCode)
+    local HttpService = game:GetService("HttpService")
+    local cancel = false
+    local click = Instance.new("BindableFunction")
+    function click.OnInvoke(response)
+        cancel = true
+    end
+    game:GetService("StarterGui"):SetCore("SendNotification",{
+        Title = "Discord",
+        Text = "Joining Discord, might take a while.",
+        Duration = 15,
+        Callback = click,
+        Button1 = "CANCEL",
+    })
+    for i = 6453, 6464 do
+        if cancel == true then break end
+        if (request or http_request or (http and http.request) or (syn and syn.request)){
+            Url = "http://127.0.0.1:"..i.."/rpc?v=1",
+            Method = "POST",
+            Body = HttpService:JSONEncode({
+                nonce = HttpService:GenerateGUID(false),
+                args = {
+                invite = {code = InviteCode},
+                code = InviteCode
+            },
+                cmd = "INVITE_BROWSER"
+            }),
+            Headers = {
+                ["Origin"] = "https://discord.com",
+                ["Content-Type"] = "application/json"
+            }
+        }.Success == true then break end
+    end
+end
