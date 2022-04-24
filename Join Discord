@@ -7,7 +7,7 @@ return function(InviteCode)
     end
     game:GetService("StarterGui"):SetCore("SendNotification",{
         Title = "Discord",
-        Text = "Joining Discord, might take a while.",
+        Text = "Joining Discord, this usually takes around 15 secconds.",
         Duration = 15,
         Callback = click,
         Button1 = "CANCEL",
