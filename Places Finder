@@ -1,3 +1,4 @@
+-- Credits appreciated DannyH#3103
 -- Gui to Lua
 -- Version: 3.2
 
@@ -30,6 +31,7 @@ TextButton.TextScaled = true
 for _,place in pairs(game:GetService("AssetService"):GetGamePlacesAsync():GetCurrentPage()) do
 	local newbutton = TextButton:Clone()
 	newbutton.MouseButton1Down:Connect(function()game:GetService("TeleportService"):Teleport(place.PlaceId)end)
+    newbutton.MouseButton2Down:Connect(function()setclipboard(place.PlaceId)end)
 	newbutton.Text = place.Name
 	newbutton.Parent = ScrollingFrame
 end
