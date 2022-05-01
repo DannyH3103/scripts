@@ -1,4 +1,4 @@
-local esp = false
+shared.esp = false
 local camera = game.Workspace.CurrentCamera
 
 local function NewLine()
@@ -238,4 +238,3 @@ game.Players.PlayerAdded:Connect(function(newplr)
     end
     coroutine.wrap(ESP)()
 end)
-return esp
