@@ -1,5 +1,5 @@
 -- IF YOU USE ANY OF MY CODE PLEASE CREDIT ME USING "DannyH#3103"
-local library = loadstring(game:HttpGet(('https://raw.githubusercontent.com/AikaV3rm/UiLib/master/Lib.lua')))()
+local library = loadstring(game:HttpGet(('https://scripts.the-software.xyz/WallyUiV3')))()
 setclipboard("https://discord.gg/HSNtxqskyw")
 game:GetService("StarterGui"):SetCore("SendNotification",{
 	Title = "Credits",
