@@ -226,7 +226,7 @@ NewGuiPart153.Name = "GetOption"
 NewGuiPart153.Parent = NewGuiPart6
 NewGuiPart153.Archivable = true
 
-NewGuiPart154.Name = "GetSelection"
+NewGuiPart154.Name = "TotallyNotGetSelection"
 NewGuiPart154.Parent = NewGuiPart6
 NewGuiPart154.Archivable = true
 
@@ -234,11 +234,11 @@ NewGuiPart155.Name = "SetOption"
 NewGuiPart155.Parent = NewGuiPart6
 NewGuiPart155.Archivable = true
 
-NewGuiPart156.Name = "SetSelection"
+NewGuiPart156.Name = "TotallyNotSetSelection"
 NewGuiPart156.Parent = NewGuiPart6
 NewGuiPart156.Archivable = true
 
-NewGuiPart157.Name = "SelectionChanged"
+NewGuiPart157.Name = "TotallyNotSelectionChanged"
 NewGuiPart157.Parent = NewGuiPart6
 NewGuiPart157.Archivable = true
 
@@ -1757,9 +1757,9 @@ local SaveMapSettings = {
 	CameraInstances = true
 }
 
-local SelectionChanged = ExplorerPanel:WaitForChild("SelectionChanged")
-local GetSelection = ExplorerPanel:WaitForChild("GetSelection")
-local SetSelection = ExplorerPanel:WaitForChild("SetSelection")
+local TotallyNotSelectionChanged = ExplorerPanel:WaitForChild("TotallyNotSelectionChanged")
+local TotallyNotGetSelection = ExplorerPanel:WaitForChild("TotallyNotGetSelection")
+local TotallyNotSetSelection = ExplorerPanel:WaitForChild("TotallyNotSetSelection")
 
 local Player = game:GetService("Players").LocalPlayer
 local Mouse = Player:GetMouse()
@@ -1915,7 +1915,7 @@ Mouse.Button1Down:connect(function()
 	end
 end)
 
-SelectionChanged.Event:connect(function()
+TotallyNotSelectionChanged.Event:connect(function()
 	if Settings.SelBox then
 		local success,err = pcall(function()
 			local selection = getSelection()
@@ -4000,21 +4000,21 @@ local updateList,rawUpdateList,updateScroll,rawUpdateSize do
 end
 
 local Selection do
-	local bindGetSelection = explorerPanel:FindFirstChild("GetSelection")
+	local bindGetSelection = explorerPanel:FindFirstChild("TotallyNotGetSelection")
 	if not bindGetSelection then
-		bindGetSelection = Create('BindableFunction',{Name = "GetSelection"})
+		bindGetSelection = Create('BindableFunction',{Name = "TotallyNotGetSelection"})
 		bindGetSelection.Parent = explorerPanel
 	end
 
-	local bindSetSelection = explorerPanel:FindFirstChild("SetSelection")
+	local bindSetSelection = explorerPanel:FindFirstChild("TotallyNotSetSelection")
 	if not bindSetSelection then
-		bindSetSelection = Create('BindableFunction',{Name = "SetSelection"})
+		bindSetSelection = Create('BindableFunction',{Name = "TotallyNotSetSelection"})
 		bindSetSelection.Parent = explorerPanel
 	end
 
-	local bindSelectionChanged = explorerPanel:FindFirstChild("SelectionChanged")
+	local bindSelectionChanged = explorerPanel:FindFirstChild("TotallyNotSelectionChanged")
 	if not bindSelectionChanged then
-		bindSelectionChanged = Create('BindableEvent',{Name = "SelectionChanged"})
+		bindSelectionChanged = Create('BindableEvent',{Name = "TotallyNotSelectionChanged"})
 		bindSelectionChanged.Parent = explorerPanel
 	end
 
@@ -6020,8 +6020,8 @@ local Gui = D_E_X
 local PropertiesFrame = Gui:WaitForChild("PropertiesFrame")
 local ExplorerFrame = Gui:WaitForChild("ExplorerPanel")
 
-local bindGetSelection = ExplorerFrame.GetSelection
-local bindSelectionChanged = ExplorerFrame.SelectionChanged
+local bindGetSelection = ExplorerFrame.TotallyNotGetSelection
+local bindSelectionChanged = ExplorerFrame.TotallyNotSelectionChanged
 local bindGetApi = PropertiesFrame.GetApi
 local bindGetAwait = PropertiesFrame.GetAwaiting
 local bindSetAwait = PropertiesFrame.SetAwaiting
