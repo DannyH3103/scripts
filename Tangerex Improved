@@ -36,8 +36,7 @@ function a:Reanimate(method, clickfling)
 		for i, v in next, game.Players.LocalPlayer.Character:GetDescendants() do
 			if v:IsA("BasePart") then
 				table.insert(ct, srv.Heartbeat:Connect(function()
-					--v.Velocity = Vector3.new(17.325, 17.325, 17.325)
-                    v.Velocity = math.sin(sine/10) * 100
+					v.Velocity = Vector3.new(17.325, 17.325, 17.325)
 				end))
 			end
 		end
