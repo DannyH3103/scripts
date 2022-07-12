@@ -15,7 +15,7 @@ local poses = {
 	run = "no"
 }
 
-getfenv().sine = 1
+getfenv().sine = 0
 
 function a:Reanimate(method, clickfling)
 	local clickfling = clickfling or false
@@ -40,7 +40,8 @@ function a:Reanimate(method, clickfling)
 		for i, v in next, game.Players.LocalPlayer.Character:GetDescendants() do
 			if v:IsA("BasePart") then
 				table.insert(ct, srv.Heartbeat:Connect(function()
-					v.Velocity = Vector3.new(17.325, 17.325, 17.325)
+					--v.Velocity = Vector3.new(17.325, 17.325, 17.325)
+                    v.Velocity = math.sin(sine/10)
 				end))
 			end
 		end
@@ -860,7 +861,7 @@ function a:Reanimate(method, clickfling)
 			end
 			loop:Disconnect()
 		end
-		sine = sine + 1
+		sine = tick() * 109
 		Root = character.Humanoid.RootPart
 		local rlegray = Ray.new(character["Right Leg"].Position + Vector3.new(0, 0.5, 0), Vector3.new(0, - 2, 0))
 		local rlegpart, rlegendPoint = workspace:FindPartOnRay(rlegray, character)
