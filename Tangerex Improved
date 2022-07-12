@@ -119,7 +119,7 @@ function a:Reanimate(method, clickfling)
 			for _, v in pairs(ct) do
 				v:Disconnect()
 			end
-            for i, v in next, game.Players.LocalPlayer.Character:GetDescendants() do
+            for i, v in next, char:GetDescendants() do
                 if v:IsA("BasePart") then
                     v.Velocity = Vector3.new(0, 0, 0)
                     v.AngularVelocity = Vector3.new(0, 0, 0)
@@ -432,7 +432,7 @@ function a:Reanimate(method, clickfling)
 			for i, v in next, ct do
 				v:Disconnect()
 			end
-            for i, v in next, game.Players.LocalPlayer.Character:GetDescendants() do
+            for i, v in next, char:GetDescendants() do
                 if v:IsA("BasePart") then
                     v.Velocity = Vector3.new(0, 0, 0)
                     v.AngularVelocity = Vector3.new(0, 0, 0)
@@ -779,7 +779,7 @@ function a:Reanimate(method, clickfling)
 			for i, v in next, ct do
 				v:Disconnect()
 			end
-            for i, v in next, game.Players.LocalPlayer.Character:GetDescendants() do
+            for i, v in next, char:GetDescendants() do
                 if v:IsA("BasePart") then
                     v.Velocity = Vector3.new(0, 0, 0)
                     v.AngularVelocity = Vector3.new(0, 0, 0)
