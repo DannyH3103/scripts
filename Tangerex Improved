@@ -119,12 +119,6 @@ function a:Reanimate(method, clickfling)
 			for _, v in pairs(ct) do
 				v:Disconnect()
 			end
-            for i, v in next, char:GetDescendants() do
-                if v:IsA("BasePart") then
-                    v.Velocity = Vector3.new(0, 0, 0)
-                    v.AngularVelocity = Vector3.new(0, 0, 0)
-                end
-            end
 		end))
 		plr.Character = reanim
 		workspace.CurrentCamera.CameraSubject = reanim.Humanoid
@@ -432,12 +426,6 @@ function a:Reanimate(method, clickfling)
 			for i, v in next, ct do
 				v:Disconnect()
 			end
-            for i, v in next, char:GetDescendants() do
-                if v:IsA("BasePart") then
-                    v.Velocity = Vector3.new(0, 0, 0)
-                    v.AngularVelocity = Vector3.new(0, 0, 0)
-                end
-            end
 		end))
 	elseif method == "PD" then
 		plr = game.Players.LocalPlayer
@@ -779,12 +767,6 @@ function a:Reanimate(method, clickfling)
 			for i, v in next, ct do
 				v:Disconnect()
 			end
-            for i, v in next, char:GetDescendants() do
-                if v:IsA("BasePart") then
-                    v.Velocity = Vector3.new(0, 0, 0)
-                    v.AngularVelocity = Vector3.new(0, 0, 0)
-                end
-            end
 			plr.Character = char
 			char:BreakJoints()
 			char.Humanoid:Destroy()
