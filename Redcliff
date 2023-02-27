@@ -1,0 +1,19 @@
+-- Credits Appreciated
+
+local plr = game.Players.LocalPlayer
+local mainFolder = loadstring(game:HttpGet("https://scripts.the-software.xyz/WallyUiV3"))():CreateWindow("Redcliff"):CreateFolder("Main")
+mainFolder:Button("Expand Redcliff", function()
+    for count = 1, 6 do
+        plr.Character.RedcliffKnight_HelmetAccessory.Handle:WaitForChild("OriginalSize"):Destroy()
+        wait()
+        plr.Character.Humanoid:FindFirstChildWhichIsA("NumberValue"):Destroy()
+    end
+end)
+mainFolder:Button("Drop Redcliff", function()
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid:Destroy()
+    end
+end)
+mainFolder:Button("Turn Redcliff into block", function()
+    plr.Character.RedcliffKnight_HelmetAccessory.Handle.SpecialMesh:Destroy()
+end)
