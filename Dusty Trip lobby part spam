@@ -28,7 +28,7 @@ for _,BrickFolder in pairs(game.Workspace.SkinData:GetChildren()) do for _,Brick
 		
 		local oldPos = Brick.Position
 		local loops = 0
-		while (oldPos - Brick.Position).magnitude < 5 and loops <= refresh * timeout do
+		while (oldPos - Brick.Position).magnitude < 5 and loops <= refresh / timeout do
 			loops += 1
 			wait(refresh)
 		end
