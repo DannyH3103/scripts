@@ -1,0 +1,70 @@
+-- Thanks to Inf Yield for sections of this code
+
+local TeleportCheck = false
+game.Players.LocalPlayer.OnTeleport:Connect(function(State)
+	if  (not TeleportCheck) and queueteleport then
+		TeleportCheck = true
+		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()")
+	end
+end)
+
+local char = game.Players.LocalPlayer.Character
+local MovFolder = Instance.new("Folder", char)
+local bricks = {}
+local timeout, refresh = 10, 0.1 -- Change timeout(secconds) for how long the script should wait for net ownership before returning. Refresh(secconds) is how often it checks for signs of net ownership.
+for _,BrickFolder in pairs(game.Workspace.SkinData:GetChildren()) do for _,Brick in pairs(BrickFolder.Colors:GetChildren()) do
+		Brick.CanCollide = false
+		
+		local at = Instance.new("Attachment")
+		at.Parent = Brick
+		
+		local ap = Instance.new("AlignPosition")
+		ap.Parent = MovFolder
+		ap.Mode = Enum.PositionAlignmentMode.OneAttachment
+		ap.MaxForce = 9e9
+		ap.Position = Vector3.new(35, 40, -170)
+		ap.ReactionForceEnabled = true
+		ap.Attachment0 = at
+		
+		char.HumanoidRootPart.CFrame = CFrame.new(Brick.Position + Vector3.new(5, 0, 0))
+		
+		local oldPos = Brick.Position
+		local loops = 0
+		while (oldPos - Brick.Position).magnitude < 5 and loops <= refresh * timeout do
+			loops += 1
+			wait(refresh)
+		end
+		
+		table.insert(bricks, Brick)
+end end
+
+wait(5)
+
+MovFolder:Destroy()
+for _,Brick in pairs(bricks) do
+	Brick.CanCollide = true
+	Brick.Attachment:Destroy()
+	
+	char.HumanoidRootPart.CFrame = CFrame.new(50, 5, -183)
+end
+
+wait(4)
+
+-- thanks to NoobSploit for fixing
+if httprequest then
+	local servers = {}
+	local req = httprequest({Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.PlaceId)})
+	local body = game:GetService("HttpService"):JSONDecode(req.Body)
+
+	if body and body.data then
+		for i, v in next, body.data do
+			if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.JobId then
+				table.insert(servers, 1, v.id)
+			end
+		end
+	end
+
+	if #servers > 0 then
+		game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
+	end
+end
