@@ -1,7 +1,7 @@
 -- Thanks to Inf Yield for sections of this code
 
 repeat wait() until game:IsLoaded()
-
+queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 local TeleportCheck = false
 game.Players.LocalPlayer.OnTeleport:Connect(function(State)
 	if  (not TeleportCheck) and queueteleport then
