@@ -9,7 +9,7 @@ game.Players.LocalPlayer.OnTeleport:Connect(function(State)
 		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/DannyH3103/scripts/main/Dusty%20Trip%20lobby%20part%20spam'))()")
 	end
 end)
-wait(8)
+wait(5)
 local char = game.Players.LocalPlayer.Character
 local MovFolder = Instance.new("Folder", char)
 local bricks = {}
@@ -40,7 +40,7 @@ for _,BrickFolder in pairs(game.Workspace.SkinData:GetChildren()) do for _,Brick
 		table.insert(bricks, Brick)
 end end
 
-wait(5)
+wait(2)
 
 MovFolder:Destroy()
 for _,Brick in pairs(bricks) do
@@ -50,7 +50,7 @@ for _,Brick in pairs(bricks) do
 	char.HumanoidRootPart.CFrame = CFrame.new(50, 5, -183)
 end
 
-wait(4)
+wait(2)
 
 -- thanks to NoobSploit for fixing
 if httprequest then
