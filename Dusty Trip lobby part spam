@@ -1,15 +1,11 @@
 -- Thanks to Inf Yield for sections of this code
 
 repeat wait() until game:IsLoaded()
-queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-local TeleportCheck = false
-game.Players.LocalPlayer.OnTeleport:Connect(function(State)
-	if  (not TeleportCheck) and queueteleport then
-		TeleportCheck = true
-		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/DannyH3103/scripts/main/Dusty%20Trip%20lobby%20part%20spam'))()")
-	end
-end)
-wait(5)
+local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
+if queueteleport then
+	queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/DannyH3103/scripts/main/Dusty%20Trip%20lobby%20part%20spam'))()")
+end
+wait(4)
 local char = game.Players.LocalPlayer.Character
 local MovFolder = Instance.new("Folder", char)
 local bricks = {}
