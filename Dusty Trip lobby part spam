@@ -18,6 +18,7 @@ lobbyDetector.Transparency = 1
 lobbyDetector.Touched:Connect(function(part)
 	if part:IsDescendantOf(game.Workspace.SkinData) then
 		table.insert(inLobby, part)
+		print(part)
 	end
 end)
 lobbyDetector.Size = Vector3.new(100, 100, 100)
