@@ -75,6 +75,6 @@ if httprequest then
 		if #servers > 0 then
 			game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
 		end
-		wait(20)
+		wait(100)
 	end
 end
