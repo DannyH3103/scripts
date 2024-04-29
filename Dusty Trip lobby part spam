@@ -16,14 +16,14 @@ lobbyDetector.Anchored = true
 lobbyDetector.Transparency = 1
 lobbyDetector.Position = Vector3.new(35, 20, -170)
 lobbyDetector.Size = Vector3.new(100, 100, 100)
+lobbyDetector.Parent = game.Workspace
 for _,part in pairs(lobbyDetector:GetTouchingParts()) do
     if part:IsDescendantOf(game.Workspace.SkinData) and table.find(inLobby, Brick) == nil then
 		table.insert(inLobby, part)
 		print(part)
 	end
 end
-lobbyDetector.CanCollide = false
-lobbyDetector.Parent = game.Workspace
+lobbyDetector:Destroy()
 for _,BrickFolder in pairs(game.Workspace.SkinData:GetChildren()) do for _,Brick in pairs(BrickFolder.Colors:GetChildren()) do
 		if table.find(inLobby, Brick) == nil then
 			Brick.CanCollide = false
