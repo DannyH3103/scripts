@@ -1,0 +1,72 @@
+-- Draggable GUI Script for Roblox with Smooth Dragging
+-- Place this LocalScript as a child of the GUI object you want to drag (e.g., a Frame inside a ScreenGui)
+
+local gui = script.Parent  -- The GUI object to drag
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+local targetPos
+
+local lerpConnection = nil
+local SMOOTH_FACTOR = 20  -- Adjust for more/less smoothness (higher = faster catch-up)
+local EPSILON_OFFSET = 0.5  -- Pixel threshold for offsets
+local EPSILON_SCALE = 0.001  -- Threshold for scales
+
+local function update(input)
+	local delta = input.Position - dragStart
+	targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+gui.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = gui.Position
+		targetPos = gui.Position
+
+		if lerpConnection then
+			lerpConnection:Disconnect()
+		end
+
+		lerpConnection = RunService.RenderStepped:Connect(function(dt)
+			gui.Position = gui.Position:Lerp(targetPos, 1 - math.exp(-SMOOTH_FACTOR * dt))
+
+			if not dragging then
+				local diffOffsetX = math.abs(gui.Position.X.Offset - targetPos.X.Offset)
+				local diffOffsetY = math.abs(gui.Position.Y.Offset - targetPos.Y.Offset)
+				local diffScaleX = math.abs(gui.Position.X.Scale - targetPos.X.Scale)
+				local diffScaleY = math.abs(gui.Position.Y.Scale - targetPos.Y.Scale)
+
+				if diffOffsetX < EPSILON_OFFSET and diffOffsetY < EPSILON_OFFSET and
+					diffScaleX < EPSILON_SCALE and diffScaleY < EPSILON_SCALE then
+					lerpConnection:Disconnect()
+					lerpConnection = nil
+				end
+			end
+		end)
+
+		local conn
+		conn = input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+				conn:Disconnect()
+			end
+		end)
+	end
+end)
+
+gui.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input == dragInput) then
+		update(input)
+	end
+end)
