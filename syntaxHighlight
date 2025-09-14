@@ -1,0 +1,486 @@
+-- CodeEditor.lua
+-- A lightweight Luau syntax-highlighting editor for Roblox
+-- Features: line numbers, RichText highlighting, tabs, auto-indent, [[long strings]], block & line comments
+-- Drop-in API: CodeEditor.new(parent, options) -> editor {SetText, GetText, Focus, Destroy}
+
+local TextService = game:GetService("TextService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local CodeEditor = {}
+CodeEditor.__index = CodeEditor
+
+-- ======= THEME =======
+local defaultTheme = {
+	Background = Color3.fromRGB(18, 18, 18),
+	GutterBackground = Color3.fromRGB(25, 25, 25),
+	GutterText = Color3.fromRGB(120, 120, 120),
+	Plain = Color3.fromRGB(212, 212, 212),
+	Keyword = Color3.fromRGB(197, 134, 192),
+	Builtin = Color3.fromRGB(79, 193, 255),
+	String = Color3.fromRGB(206, 145, 120),
+	Number = Color3.fromRGB(181, 206, 168),
+	Comment = Color3.fromRGB(106, 153, 85),
+	Operator = Color3.fromRGB(212, 212, 212),
+	Selection = Color3.fromRGB(45, 90, 160)
+}
+
+-- Luau keywords & builtins
+local KEYWORDS = {
+	["and"]=true, ["break"]=true, ["do"]=true, ["else"]=true, ["elseif"]=true, ["end"]=true, ["false"]=true,
+	["for"]=true, ["function"]=true, ["if"]=true, ["in"]=true, ["local"]=true, ["nil"]=true, ["not"]=true,
+	["or"]=true, ["repeat"]=true, ["return"]=true, ["then"]=true, ["true"]=true, ["until"]=true, ["while"]=true,
+	-- Luau extensions
+	["continue"]=true, ["type"]=true, ["typeof"]=true, ["export"]=true
+}
+
+local BUILTINS = {
+	-- common globals
+	["print"]=true, ["warn"]=true, ["pairs"]=true, ["ipairs"]=true, ["next"]=true, ["require"]=true,
+	["table"]=true, ["string"]=true, ["math"]=true, ["coroutine"]=true, ["task"]=true, ["os"]=true,
+	-- Roblox globals
+	["game"]=true, ["workspace"]=true, ["script"]=true, ["Enum"]=true, ["Instance"]=true, ["Vector3"]=true,
+	["CFrame"]=true, ["UDim2"]=true, ["Color3"]=true
+}
+
+local function rgbToHex(c)
+	return string.format("#%02X%02X%02X", math.floor(c.R*255 + 0.5), math.floor(c.G*255 + 0.5), math.floor(c.B*255 + 0.5))
+end
+
+local function escapeRich(text)
+	-- escape &, <, > for RichText safety
+	text = string.gsub(text, "&", "&amp;")
+	text = string.gsub(text, "<", "&lt;")
+	text = string.gsub(text, ">", "&gt;")
+	return text
+end
+
+local function span(color3, text)
+	return string.format('<font color="%s">%s</font>', rgbToHex(color3), text)
+end
+
+-- Simple lexer for Luau:
+-- handles: -- line comments, --[[ block comments ]], ' " strings with escapes, [[ long strings ]], numbers, identifiers, operators, whitespace
+local function lexLuau(input, theme)
+	local i, n = 1, #input
+	local out = table.create(math.floor(n * 1.2))
+	local function peek(o) o = o or 0; if i+o <= n then return string.sub(input, i+o, i+o) end end
+	local function starts(str) return string.sub(input, i, i+#str-1) == str end
+	local function push(color, raw) out[#out+1] = span(color, escapeRich(raw)) end
+	local function pushPlain(raw) out[#out+1] = escapeRich(raw) end
+
+	while i <= n do
+		local c = string.sub(input, i, i)
+
+		-- Line comment --
+		if starts("--") and not starts("--[[") then
+			local j = string.find(input, "\n", i+2, true)
+			local raw = j and string.sub(input, i, j-1) or string.sub(input, i)
+			push(theme.Comment, raw)
+			i = j and j or n+1
+
+			-- Block comment --[[ ... ]]
+		elseif starts("--[[") then
+			local j = string.find(input, "]]", i+4, true)
+			local raw = j and string.sub(input, i, j+1) or string.sub(input, i)
+			push(theme.Comment, raw)
+			i = j and (j+2) or (n+1)
+
+			-- Long string [[ ... ]]
+		elseif starts("[[") then
+			local j = string.find(input, "]]", i+2, true)
+			local raw = j and string.sub(input, i, j+1) or string.sub(input, i)
+			push(theme.String, raw)
+			i = j and (j+2) or (n+1)
+
+			-- Quoted string '...' or "..."
+		elseif c == "'" or c == '"' then
+			local quote = c
+			local j = i + 1
+			local escaped = false
+			while j <= n do
+				local cj = string.sub(input, j, j)
+				if escaped then
+					escaped = false
+				else
+					if cj == "\\" then
+						escaped = true
+					elseif cj == quote then
+						break
+					end
+				end
+				j += 1
+			end
+			local raw = string.sub(input, i, math.min(j, n))
+			push(theme.String, raw)
+			i = (j < n and j+1) or (n+1)
+
+			-- Number (supports 0x.. hex, decimal, exponent; also .123 style)
+		elseif (c:match("%d")) or (c == "." and peek(1) and string.sub(input, i+1, i+1):match("%d")) then
+			local j = i
+			if starts("0x") or starts("0X") then
+				j = i + 2
+				while j <= n and string.sub(input, j, j):match("[%da-fA-F]") do j += 1 end
+			else
+				while j <= n and string.sub(input, j, j):match("%d") do j += 1 end
+				if j <= n and string.sub(input, j, j) == "." then
+					j += 1
+					while j <= n and string.sub(input, j, j):match("%d") do j += 1 end
+				end
+				if j <= n and string.sub(input, j, j):lower() == "e" then
+					j += 1
+					if j <= n and string.sub(input, j, j):match("[+-]") then j += 1 end
+					while j <= n and string.sub(input, j, j):match("%d") do j += 1 end
+				end
+			end
+			local raw = string.sub(input, i, j-1)
+			push(theme.Number, raw)
+			i = j
+
+			-- Identifier / keyword / builtin
+		elseif c:match("[%a_]") then
+			local j = i + 1
+			while j <= n and string.sub(input, j, j):match("[%w_]") do j += 1 end
+			local raw = string.sub(input, i, j-1)
+			if KEYWORDS[raw] then
+				push(theme.Keyword, raw)
+			elseif BUILTINS[raw] then
+				push(theme.Builtin, raw)
+			else
+				pushPlain(raw)
+			end
+			i = j
+
+			-- Operators & punctuation (two-char first)
+		elseif i < n then
+			local two = string.sub(input, i, i+1)
+			if two == "==" or two == "~=" or two == "<=" or two == ">=" or two == ".." or two == "::" or two == "//" then
+				push(theme.Operator, two)
+				i += 2
+			else
+				-- single char operator/punct/whitespace
+				if c:match("[%+%-%*%%%/%^%#%=%<%>%(%)]") or c:match("[%{%}%[%]:;%,%.]") then
+					push(theme.Operator, c)
+				else
+					-- whitespace (space, tab, newline, etc.)
+					if c == "\t" then
+						-- keep tabs (we’ll visually align via monospaced font); rendering-wise fine
+						pushPlain("\t")
+					else
+						pushPlain(c)
+					end
+				end
+				i += 1
+			end
+		else
+			-- last single char
+			if c:match("[%+%-%*%%%/%^%#%=%<%>%(%)]") or c:match("[%{%}%[%]:;%,%.]") then
+				push(theme.Operator, c)
+			else
+				pushPlain(c)
+			end
+			i += 1
+		end
+	end
+
+	return table.concat(out)
+end
+
+local function countLines(text)
+	local _, cnt = string.gsub(text, "\n", "")
+	return cnt + 1
+end
+
+local function makeUI(parent, theme, textSize, font, paddingLeft)
+	local root = Instance.new("Frame")
+	root.Name = "CodeEditor"
+	root.BackgroundColor3 = theme.Background
+	root.BorderSizePixel = 0
+	root.Size = UDim2.new(1, 0, 1, 0)
+	root.Parent = parent
+
+	local scroll = Instance.new("ScrollingFrame")
+	scroll.Name = "Scroll"
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+	scroll.Position = UDim2.fromOffset(0,0)
+	scroll.Size = UDim2.fromScale(1,1)
+	scroll.ScrollBarImageTransparency = 0
+	scroll.ScrollBarThickness = 10
+	scroll.TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
+	scroll.BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
+	scroll.Parent = root
+
+	local gutter = Instance.new("TextLabel")
+	gutter.Name = "Gutter"
+	gutter.BackgroundColor3 = theme.GutterBackground
+	gutter.BorderSizePixel = 0
+	gutter.TextColor3 = theme.GutterText
+	gutter.Font = font
+	gutter.TextSize = textSize
+	gutter.TextXAlignment = Enum.TextXAlignment.Right
+	gutter.TextYAlignment = Enum.TextYAlignment.Top
+	gutter.TextWrapped = false
+	gutter.RichText = false
+	gutter.ZIndex = 1
+	gutter.Parent = scroll
+
+	local high = Instance.new("TextLabel")
+	high.Name = "Highlighter"
+	high.BackgroundTransparency = 1
+	high.BorderSizePixel = 0
+	high.TextColor3 = defaultTheme.Plain
+	high.Font = font
+	high.TextSize = textSize
+	high.TextXAlignment = Enum.TextXAlignment.Left
+	high.TextYAlignment = Enum.TextYAlignment.Top
+	high.TextWrapped = false
+	high.RichText = true
+	high.ZIndex = 4
+	high.Parent = scroll
+
+	local input = Instance.new("TextBox")
+	input.Name = "Input"
+	input.BackgroundTransparency = 1
+	input.BorderSizePixel = 0
+	input.Text = ""
+	input.ClearTextOnFocus = false
+	input.MultiLine = true
+	input.TextXAlignment = Enum.TextXAlignment.Left
+	input.TextYAlignment = Enum.TextYAlignment.Top
+	input.TextWrapped = false
+	input.TextEditable = true
+	input.Font = font
+	input.TextSize = textSize
+	input.TextColor3 = Color3.new(1,1,1) -- caret visible
+	input.TextTransparency = 0.5
+	input.RichText = false
+	input.CursorPosition = -1
+	input.ZIndex = 3
+	input.Parent = scroll
+
+
+	-- Selection color (native TextBox), also nice to set
+	pcall(function()
+		input.SelectionHighlightColor3 = theme.Selection
+	end)
+
+	-- drop shadow/edges (optional)
+	local gutterPadding = Instance.new("UIPadding")
+	gutterPadding.PaddingTop = UDim.new(0, 4)
+	gutterPadding.PaddingRight = UDim.new(0, 6)
+	gutterPadding.Parent = gutter
+
+	local codePadding = Instance.new("UIPadding")
+	codePadding.PaddingTop = UDim.new(0, 4)
+	codePadding.PaddingLeft = UDim.new(0, paddingLeft)
+	codePadding.Parent = high
+
+	local inputPadding = Instance.new("UIPadding")
+	inputPadding.PaddingTop = UDim.new(0, 4)
+	inputPadding.PaddingLeft = UDim.new(0, paddingLeft)
+	inputPadding.Parent = input
+
+	return root, scroll, gutter, high, input
+end
+
+function CodeEditor.new(parent, options)
+	options = options or {}
+	local theme = options.theme or defaultTheme
+	local textSize = options.textSize or 16
+	local font = options.font or Enum.Font.Code
+	local tabSize = options.tabSize or 4
+	local leftPad = options.leftPad or 8
+
+	local self = setmetatable({}, CodeEditor)
+
+	self._destroyed = false
+	self._theme = theme
+	self._tab = string.rep(" ", tabSize)
+	self._font = font
+	self._textSize = textSize
+
+	self._root, self._scroll, self._gutter, self._high, self._input = makeUI(parent, theme, textSize, font, leftPad)
+
+	-- state
+	self._text = ""
+	self._lineHeight = TextService:GetTextSize("A", textSize, font, Vector2.new(10000, 10000)).Y
+	self._gutterWidth = 0
+	self._dirty = true
+	self._throttle = false
+
+	local function updateGutter()
+		local lines = countLines(self._text)
+		-- build line numbers
+		local buf = table.create(lines)
+		for i = 1, lines do
+			buf[i] = tostring(i)
+		end
+		self._gutter.Text = table.concat(buf, "\n")
+
+		-- width based on digits count + padding
+		local digits = #tostring(lines)
+		local sample = string.rep("9", digits)
+		local w = TextService:GetTextSize(sample, self._textSize, self._font, Vector2.new(10000, 10000)).X + 10
+		self._gutterWidth = math.max(32, w)
+
+		self._gutter.Position = UDim2.fromOffset(0, 0)
+		self._gutter.Size = UDim2.new(0, self._gutterWidth, 0, lines * self._lineHeight + 12)
+	end
+
+	local function updateLayout()
+		local lines = countLines(self._text)
+		local contentHeight = lines * self._lineHeight + 12
+
+		self._high.Position = UDim2.fromOffset(self._gutterWidth, 0)
+		self._high.Size = UDim2.new(1, -self._gutterWidth, 0, contentHeight)
+
+		self._input.Position = UDim2.fromOffset(self._gutterWidth, 0)
+		self._input.Size = UDim2.new(1, -self._gutterWidth, 0, contentHeight)
+
+		self._scroll.CanvasSize = UDim2.fromOffset(0, contentHeight)
+	end
+
+	local function recolorNow()
+		if self._destroyed then return end
+		self._high.Text = lexLuau(self._text, self._theme)
+		updateGutter()
+		updateLayout()
+	end
+
+	local function scheduleRecolor()
+		if self._throttle then return end
+		self._throttle = true
+		task.defer(function()
+			self._throttle = false
+			recolorNow()
+		end)
+	end
+
+	-- Text sync
+	self._input:GetPropertyChangedSignal("Text"):Connect(function()
+		if self._destroyed then return end
+		self._text = self._input.Text
+		scheduleRecolor()
+	end)
+
+	-- Keep scroll aligned (line numbers move with code)
+	self._scroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+		-- nothing special: both children are inside the same ScrollingFrame so they move together
+	end)
+
+	-- Keyboard helpers: Tab / Shift+Tab / Enter auto-indent
+	UserInputService.InputBegan:Connect(function(io, processed)
+		if self._destroyed then return end
+		if processed then return end
+		local focused = UserInputService:GetFocusedTextBox()
+		if focused ~= self._input then return end
+
+		-- Helper to set text & caret safely
+		local function setWithCaret(before, insert, after)
+			self._input.Text = before .. insert .. after
+			local pos = #before + #insert + 1
+			self._input.CursorPosition = pos
+			self._input.SelectionStart = pos
+		end
+
+		-- pull selection/caret
+		local caret = self._input.CursorPosition
+		if caret and caret > 0 then
+			local text = self._input.Text
+			local selStart = self._input.SelectionStart or caret
+			local a, b = math.min(selStart, caret), math.max(selStart, caret)
+			local hasSelection = (b - a) > 0
+
+			-- TAB
+			-- TAB / SHIFT+TAB
+			if io.KeyCode == Enum.KeyCode.Tab then
+				if io:IsShiftDown() then
+					-- unindent selection
+					local pre = string.sub(text, 1, a-1)
+					local mid = string.sub(text, a, b-1)
+					local post = string.sub(text, b)
+					local removed = 0
+					mid = mid:gsub("\n?([ \t]*)", function(ws)
+						if ws:sub(1, #self._tab) == self._tab then
+							removed += #self._tab
+							return ws:sub(#self._tab+1)
+						elseif ws:sub(1,1) == "\t" then
+							removed += 1
+							return ws:sub(2)
+						end
+						return ws
+					end)
+					self._input.Text = pre .. mid .. post
+					self._input.SelectionStart = math.max(1, a - removed)
+					self._input.CursorPosition = math.max(1, a - removed) + #mid
+				else
+					-- indent (line or selection)
+					if hasSelection then
+						local pre = string.sub(text, 1, a-1)
+						local mid = string.sub(text, a, b-1)
+						local post = string.sub(text, b)
+						mid = mid:gsub("([^\n]*)", function(line)
+							if line == "" then return "" end
+							return self._tab .. line
+						end)
+						self._input.Text = pre .. mid .. post
+						self._input.SelectionStart = a + #self._tab
+						self._input.CursorPosition = a + #self._tab + #mid
+					else
+						local before = string.sub(text, 1, caret-1)
+						local after = string.sub(text, caret)
+						setWithCaret(before, self._tab, after)
+					end
+				end
+			end
+
+
+			-- ENTER auto-indent
+			if io.KeyCode == Enum.KeyCode.Return or io.KeyCode == Enum.KeyCode.KeypadEnter then
+				-- get current line start
+				local lineStart = text:sub(1, caret-1):match("()\n[^\n]*$") or 1
+				local currentLine = text:sub(lineStart, caret-1)
+				local indent = currentLine:match("^[ \t]*") or ""
+				-- if line ends with do/then/function or table open, add extra indent
+				local trimmed = currentLine:gsub("^%s+", "")
+				local extra = ""
+				if trimmed:match("%f[%w]do%f[%W]$") or trimmed:match("%f[%w]then%f[%W]$") or trimmed:match("%f[%w]function%f[%W]$") or trimmed:find("{%s*$") or trimmed:find("%(%s*$") then
+					extra = self._tab
+				end
+				local before = string.sub(text, 1, caret-1)
+				local after = string.sub(text, caret)
+				setWithCaret(before, "\n" .. indent .. extra, after)
+			end
+		end
+	end)
+
+	-- initial paint
+	recolorNow()
+
+	-- public API
+	function self:SetText(t)
+		if self._destroyed then return end
+		self._text = t or ""
+		self._input.Text = self._text
+		recolorNow()
+	end
+
+	function self:GetText()
+		return self._input.Text
+	end
+
+	function self:Focus()
+		self._input:CaptureFocus()
+	end
+
+	function self:Destroy()
+		if self._destroyed then return end
+		self._destroyed = true
+		self._root:Destroy()
+	end
+
+	return self
+end
+
+return CodeEditor
