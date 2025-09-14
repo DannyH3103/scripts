@@ -336,7 +336,8 @@ function CodeEditor.new(parent, options)
 		self._high.Size = UDim2.new(1, -self._gutterWidth, 0, contentHeight)
 
 		self._input.Position = UDim2.fromOffset(self._gutterWidth, 0)
-		self._input.Size = UDim2.new(1, -self._gutterWidth, 0, contentHeight)
+		self._input.Size = UDim2.new(1, -self._gutterWidth, 1, 0)
+
 
 		self._scroll.CanvasSize = UDim2.fromOffset(0, contentHeight)
 	end
