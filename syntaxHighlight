@@ -1,28 +1,24 @@
 -- CodeEditor.lua
 -- A lightweight Luau syntax-highlighting editor for Roblox
--- Features: line numbers, RichText highlighting, tabs, auto-indent, [[long strings]], block & line comments
--- Drop-in API: CodeEditor.new(parent, options) -> editor {SetText, GetText, Focus, Destroy}
 
-local TextService        = game:GetService("TextService")
-local UserInputService   = game:GetService("UserInputService")
-local RunService         = game:GetService("RunService")
+local TextService = game:GetService("TextService")
 
 local CodeEditor = {}
 CodeEditor.__index = CodeEditor
 
 -- ======= THEME =======
 local defaultTheme = {
-	Background       = Color3.fromRGB(18, 18, 18),
+	Background = Color3.fromRGB(18, 18, 18),
 	GutterBackground = Color3.fromRGB(25, 25, 25),
-	GutterText       = Color3.fromRGB(120, 120, 120),
-	Plain            = Color3.fromRGB(212, 212, 212),
-	Keyword          = Color3.fromRGB(197, 134, 192),
-	Builtin          = Color3.fromRGB(79, 193, 255),
-	String           = Color3.fromRGB(206, 145, 120),
-	Number           = Color3.fromRGB(181, 206, 168),
-	Comment          = Color3.fromRGB(106, 153, 85),
-	Operator         = Color3.fromRGB(212, 212, 212),
-	Selection        = Color3.fromRGB(45, 90, 160),
+	GutterText = Color3.fromRGB(120, 120, 120),
+	Plain = Color3.fromRGB(212, 212, 212),
+	Keyword = Color3.fromRGB(197, 134, 192),
+	Builtin = Color3.fromRGB(79, 193, 255),
+	String = Color3.fromRGB(206, 145, 120),
+	Number = Color3.fromRGB(181, 206, 168),
+	Comment = Color3.fromRGB(106, 153, 85),
+	Operator = Color3.fromRGB(212, 212, 212),
+	Selection = Color3.fromRGB(45, 90, 160),
 }
 
 -- ======= KEYWORDS & BUILTINS =======
@@ -53,7 +49,6 @@ local function rgbToHex(c: Color3): string
 end
 
 local function escapeRich(text: string): string
-	-- escape &, <, > for RichText safety
 	text = string.gsub(text, "&", "&amp;")
 	text = string.gsub(text, "<", "&lt;")
 	text = string.gsub(text, ">", "&gt;")
@@ -64,10 +59,7 @@ local function span(color3: Color3, text: string): string
 	return string.format('<font color="%s">%s</font>', rgbToHex(color3), text)
 end
 
--- ======= LEXER =======
--- Simple lexer for Luau:
--- handles: -- line comments, --[[ block comments ]], ' " strings with escapes, [[ long strings ]],
--- numbers, identifiers, operators, whitespace
+-- ======= LEXER (Luau) =======
 local function lexLuau(input: string, theme)
 	local i, n = 1, #input
 	local out = table.create(math.floor(n * 1.2))
@@ -137,7 +129,7 @@ local function lexLuau(input: string, theme)
 			push(theme.String, raw)
 			i = (j < n and j + 1) or (n + 1)
 
-			-- Number (supports 0x.. hex, decimal, exponent; also .123 style)
+			-- Number
 		elseif (c:match("%d")) or (c == "." and peek(1) and string.sub(input, i + 1, i + 1):match("%d")) then
 			local j = i
 			if starts("0x") or starts("0X") then
@@ -181,13 +173,11 @@ local function lexLuau(input: string, theme)
 				push(theme.Operator, two)
 				i += 2
 			else
-				-- single char operator/punct/whitespace
 				if c:match("[%+%-%*%%%/%^%#%=%<%>%(%)]") or c:match("[%{%}%[%]:;%,%.]") then
 					push(theme.Operator, c)
 				else
-					-- whitespace (space, tab, newline, etc.)
+					-- whitespace (tab/newline/space)
 					if c == "\t" then
-						-- keep tabs (we’ll visually align via monospaced font); rendering-wise fine
 						pushPlain("\t")
 					else
 						pushPlain(c)
@@ -209,7 +199,7 @@ local function lexLuau(input: string, theme)
 	return table.concat(out)
 end
 
--- ======= MISC UTILS =======
+-- ======= MISC =======
 local function countLines(text: string): number
 	local _, cnt = string.gsub(text, "\n", "")
 	return cnt + 1
@@ -284,12 +274,6 @@ local function makeUI(parent: Instance, theme, textSize: number, font: Enum.Font
 	input.ZIndex = 3
 	input.Parent = scroll
 
-	-- Stop Tab from moving focus between controls
-	input.NextSelectionLeft  = nil
-	input.NextSelectionRight = nil
-	input.NextSelectionUp    = nil
-	input.NextSelectionDown  = nil
-
 	-- Selection color (native TextBox)
 	pcall(function()
 		input.SelectionHighlightColor3 = theme.Selection
@@ -297,71 +281,62 @@ local function makeUI(parent: Instance, theme, textSize: number, font: Enum.Font
 
 	-- Padding
 	local gutterPadding = Instance.new("UIPadding")
-	gutterPadding.PaddingTop   = UDim.new(0, 4)
+	gutterPadding.PaddingTop = UDim.new(0, 4)
 	gutterPadding.PaddingRight = UDim.new(0, 6)
-	gutterPadding.Parent       = gutter
+	gutterPadding.Parent = gutter
 
 	local codePadding = Instance.new("UIPadding")
-	codePadding.PaddingTop  = UDim.new(0, 4)
+	codePadding.PaddingTop = UDim.new(0, 4)
 	codePadding.PaddingLeft = UDim.new(0, paddingLeft)
-	codePadding.Parent      = high
+	codePadding.Parent = high
 
 	local inputPadding = Instance.new("UIPadding")
-	inputPadding.PaddingTop  = UDim.new(0, 4)
+	inputPadding.PaddingTop = UDim.new(0, 4)
 	inputPadding.PaddingLeft = UDim.new(0, paddingLeft)
-	inputPadding.Parent      = input
+	inputPadding.Parent = input
 
 	return root, scroll, gutter, high, input
 end
 
--- ======= CONSTRUCTOR =======
+-- ======= CONSTRUCTOR (highlighting only) =======
 function CodeEditor.new(parent: Instance, options)
 	options = options or {}
-	local theme    = options.theme    or defaultTheme
+	local theme = options.theme or defaultTheme
 	local textSize = options.textSize or 16
-	local font     = options.font     or Enum.Font.Code
-	local tabSize  = options.tabSize  or 4
-	local leftPad  = options.leftPad  or 8
+	local font = options.font or Enum.Font.Code
+	local leftPad = options.leftPad or 8
 
 	local self = setmetatable({}, CodeEditor)
 
 	self._destroyed = false
-	self._theme     = theme
-	self._tab       = string.rep(" ", tabSize)
-	self._font      = font
-	self._textSize  = textSize
+	self._theme = theme
+	self._font = font
+	self._textSize = textSize
 
 	self._root, self._scroll, self._gutter, self._high, self._input =
 		makeUI(parent, theme, textSize, font, leftPad)
 
 	-- state
-	self._text        = ""
-	self._lineHeight  = TextService:GetTextSize("A", textSize, font, Vector2.new(10000, 10000)).Y
+	self._text = ""
+	self._lineHeight = TextService:GetTextSize("A", textSize, font, Vector2.new(10000, 10000)).Y
 	self._gutterWidth = 0
-	self._dirty       = true
-	self._throttle    = false
+	self._throttle = false
 
-	--------------------------------------------------------------------
 	-- Render helpers
-	--------------------------------------------------------------------
 	local function updateGutter()
 		local lines = countLines(self._text)
 
-		-- build line numbers
 		local buf = table.create(lines)
-		for i = 1, lines do
-			buf[i] = tostring(i)
-		end
+		for i = 1, lines do buf[i] = tostring(i) end
 		self._gutter.Text = table.concat(buf, "\n")
 
-		-- width based on digits count + padding
 		local digits = #tostring(lines)
 		local sample = string.rep("9", digits)
 		local w = TextService:GetTextSize(sample, self._textSize, self._font, Vector2.new(10000, 10000)).X + 10
 		self._gutterWidth = math.max(32, w)
 
 		self._gutter.Position = UDim2.fromOffset(0, 0)
-		self._gutter.Size     = UDim2.new(0, self._gutterWidth, 0, lines * self._lineHeight + 12)
+		self._gutter.Size = UDim2.new(0, self._gutterWidth, 0, lines * self._lineHeight + 12)
 	end
 
 	local function updateLayout()
@@ -369,10 +344,10 @@ function CodeEditor.new(parent: Instance, options)
 		local contentHeight = lines * self._lineHeight + 12
 
 		self._high.Position = UDim2.fromOffset(self._gutterWidth, 0)
-		self._high.Size     = UDim2.new(1, -self._gutterWidth, 0, contentHeight)
+		self._high.Size = UDim2.new(1, -self._gutterWidth, 0, contentHeight)
 
 		self._input.Position = UDim2.fromOffset(self._gutterWidth, 0)
-		self._input.Size     = UDim2.new(1, -self._gutterWidth, 1, 0)
+		self._input.Size = UDim2.new(1, -self._gutterWidth, 1, 0)
 
 		self._scroll.CanvasSize = UDim2.fromOffset(0, contentHeight)
 	end
@@ -393,297 +368,17 @@ function CodeEditor.new(parent: Instance, options)
 		end)
 	end
 
-	--------------------------------------------------------------------
-	-- Text sync (keeps highlighter & gutter in sync)
-	--------------------------------------------------------------------
+	-- Keep highlighter & gutter in sync with TextBox
 	self._input:GetPropertyChangedSignal("Text"):Connect(function()
 		if self._destroyed then return end
 		self._text = self._input.Text
 		scheduleRecolor()
 	end)
 
-	--------------------------------------------------------------------
-	-- Indent / Unindent helper (kept for reference/manual use)
-	--------------------------------------------------------------------
-	local function applyIndent(shift: boolean)
-		local text = self._input.Text
-		local caret = self._input.CursorPosition or 1
-		local selStart = self._input.SelectionStart or caret
-		local a, b = math.min(selStart, caret), math.max(selStart, caret)
-
-		local pre  = text:sub(1, a - 1)
-		local mid  = text:sub(a, b - 1)
-		local post = text:sub(b)
-
-		if b > a then
-			-- Block selection
-			if shift then
-				-- Unindent each selected line
-				mid = mid:gsub("(\n?)([ \t]*)", function(nl, ws)
-					if ws:sub(1, #self._tab) == self._tab then
-						return nl .. ws:sub(#self._tab + 1)
-					elseif ws:sub(1,1) == "\t" then
-						return nl .. ws:sub(2)
-					else
-						return nl .. ws
-					end
-				end)
-			else
-				-- Indent each selected line
-				mid = mid:gsub("([^\n]*)", function(line)
-					if line == "" then return "" end
-					return self._tab .. line
-				end)
-			end
-
-			self._input.Text = pre .. mid .. post
-			self._input.SelectionStart = a
-			self._input.CursorPosition  = a + #mid
-
-		else
-			-- No selection
-			if shift then
-				-- Unindent current line
-				local lineStart = text:sub(1, caret - 1):match("()\n[^\n]*$") or 1
-				local head = text:sub(1, lineStart - 1)
-				local line = text:sub(lineStart, caret - 1)
-				if line:sub(1, #self._tab) == self._tab then
-					line = line:sub(#self._tab + 1)
-					self._input.Text = head .. line .. text:sub(caret)
-					local pos = math.max(1, caret - #self._tab)
-					self._input.CursorPosition = pos
-					self._input.SelectionStart = pos
-				elseif line:sub(1,1) == "\t" then
-					line = line:sub(2)
-					self._input.Text = head .. line .. text:sub(caret)
-					local pos = math.max(1, caret - 1)
-					self._input.CursorPosition = pos
-					self._input.SelectionStart = pos
-				end
-			else
-				-- Insert spaces at caret
-				self._input.Text = pre .. self._tab .. post
-				local pos = caret + #self._tab
-				self._input.CursorPosition = pos
-				self._input.SelectionStart = pos
-			end
-		end
-	end
-
-	--------------------------------------------------------------------
-	-- TAB & ENTER workaround: snapshot-on-keydown, then overwrite on Text change
-	--------------------------------------------------------------------
-	-- utf8-safe codepoint -> byte index (for substring slicing)
-	local function cp2byte(s: string, cp: number): number
-		local n = utf8.len(s)
-		if not n then return math.clamp(cp or 1, 1, #s + 1) end
-		if cp <= 1 then return 1 end
-		if cp >= n + 1 then return #s + 1 end
-		local ok, bi = pcall(utf8.offset, s, cp)
-		return (ok and bi) or (#s + 1)
-	end
-
-	-- map each line in a block
-	local function mapLines(block: string, fn: (string) -> string): string
-		local out = {}
-		for seg in (block .. "\n"):gmatch("([^\n]*)\n") do
-			out[#out+1] = fn(seg)
-		end
-		return table.concat(out, "\n")
-	end
-
-	-- Build intended TAB result from the *snapshot* (before Roblox mutates)
-	local function buildIntendedTab(oldText: string, aCP: number, bCP: number, shiftDown: boolean)
-		local aB, bB = cp2byte(oldText, aCP), cp2byte(oldText, bCP)
-		local tabstr  = self._tab
-
-		if bCP > aCP then
-			-- Selection: indent/unindent lines inside [a,b)
-			local pre  = oldText:sub(1, aB - 1)
-			local mid  = oldText:sub(aB, bB - 1)
-			local post = oldText:sub(bB)
-
-			if shiftDown then
-				mid = mapLines(mid, function(line)
-					if line:sub(1, #tabstr) == tabstr then
-						return line:sub(#tabstr + 1)
-					elseif line:sub(1,1) == "\t" then
-						return line:sub(2)
-					else
-						return line
-					end
-				end)
-			else
-				mid = mapLines(mid, function(line)
-					if line == "" then return "" end
-					return tabstr .. line
-				end)
-			end
-
-			local newText    = pre .. mid .. post
-			local newSelCP   = aCP
-			local newCaretCP = aCP + (utf8.len(mid) or #mid)
-			return newText, newSelCP, newCaretCP
-		else
-			-- No selection: insert spaces at caret
-			local pre  = oldText:sub(1, aB - 1)
-			local post = oldText:sub(aB)
-			local newText    = pre .. tabstr .. post
-			local caretCP    = aCP + #tabstr -- spaces: CP==bytes
-			return newText, caretCP, caretCP
-		end
-	end
-
-	-- Build intended ENTER result from the *snapshot* (before Roblox mutates)
-	local function buildIntendedEnter(oldText: string, aCP: number, bCP: number)
-		local aB, bB = cp2byte(oldText, aCP), cp2byte(oldText, bCP)
-		local pre  = oldText:sub(1, aB - 1)
-		local post = oldText:sub(bB)
-
-		local lineStart = pre:match("()\n[^\n]*$") or 1
-		local currentLine = pre:sub(lineStart)
-		local indent = currentLine:match("^[ \t]*") or ""
-		local trimmed = currentLine:gsub("^%s+", "")
-		local extra = ""
-
-		if trimmed:match("%f[%w]do%f[%W]$") or
-			trimmed:match("%f[%w]then%f[%W]$") or
-			trimmed:match("%f[%w]function%f[%W]$") or
-			trimmed:match("%f[%w]repeat%f[%W]$") or
-			trimmed:find("{%s*$") or
-			trimmed:find("%(%s*$") then
-			extra = self._tab
-		end
-
-		local insert = "\n" .. indent .. extra
-		local out    = pre .. insert .. post
-		local posCP  = aCP + #insert
-		return out, posCP
-	end
-
-	-- Normalize caret/selection (SelectionStart may be -1)
-	local function snapshotCP(tb: TextBox)
-		local s = tb.Text
-		local lenCP = (utf8.len(s) or #s)
-		local rawCaret = tb.CursorPosition
-		local rawSel   = tb.SelectionStart
-		local caretCP  = (rawCaret and rawCaret > 0) and rawCaret or (lenCP + 1)
-		local selCP    = (rawSel   and rawSel   > 0) and rawSel   or caretCP
-		local aCP, bCP = math.min(selCP, caretCP), math.max(selCP, caretCP)
-		return s, aCP, bCP
-	end
-
-	UserInputService.InputBegan:Connect(function(io, _processed)
-		if self._destroyed then return end
-		if UserInputService:GetFocusedTextBox() ~= self._input then return end
-
-		local isTab   = (io.KeyCode == Enum.KeyCode.Tab)
-		local isEnter = (io.KeyCode == Enum.KeyCode.Return or io.KeyCode == Enum.KeyCode.KeypadEnter)
-		if not (isTab or isEnter) then return end
-
-		-- Snapshot BEFORE engine mutation
-		local oldText, aCP, bCP = snapshotCP(self._input)
-
-		if isTab then
-			local shiftDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
-				or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
-
-			print(("[%.3f] [TAB] snapshot: aCP=%d bCP=%d hadSel=%s len=%d")
-				:format(os.clock(), aCP, bCP, tostring(bCP>aCP), #oldText))
-
-			-- Wait for Roblox's own mutation exactly once, then overwrite
-			local applied = false
-			local conn
-			conn = self._input:GetPropertyChangedSignal("Text"):Connect(function()
-				if applied then return end
-				applied = true
-				if conn then conn:Disconnect() end
-
-				local engineText = self._input.Text
-				print(("[%.3f] [TAB] engine mutation: Δ%+d bytes")
-					:format(os.clock(), #engineText - #oldText))
-
-				local intendedText, selCP, caretCP =
-					buildIntendedTab(oldText, aCP, bCP, shiftDown)
-
-				print(("[%.3f] [TAB] intended len=%d"):format(os.clock(), #intendedText))
-
-				self._input:CaptureFocus()
-				self._input.Text = intendedText
-				self._input.SelectionStart = selCP
-				self._input.CursorPosition  = caretCP
-
-				self._text = intendedText
-				scheduleRecolor()
-			end)
-
-			-- Failsafe if Text somehow didn't change
-			task.delay(0.12, function()
-				if applied or self._destroyed then return end
-				if conn then conn:Disconnect() end
-
-				local intendedText, selCP, caretCP =
-					buildIntendedTab(oldText, aCP, bCP, shiftDown)
-
-				print(("[%.3f] [TAB] failsafe apply; len=%d"):format(os.clock(), #intendedText))
-
-				self._input:CaptureFocus()
-				self._input.Text = intendedText
-				self._input.SelectionStart = selCP
-				self._input.CursorPosition  = caretCP
-
-				self._text = intendedText
-				scheduleRecolor()
-			end)
-
-		elseif isEnter then
-			print(("[%.3f] [ENTER] snapshot aCP=%d bCP=%d"):format(os.clock(), aCP, bCP))
-
-			local applied = false
-			local conn
-			conn = self._input:GetPropertyChangedSignal("Text"):Connect(function()
-				if applied then return end
-				applied = true
-				if conn then conn:Disconnect() end
-
-				local intendedText, posCP = buildIntendedEnter(oldText, aCP, bCP)
-				print(("[%.3f] [ENTER] intended len=%d"):format(os.clock(), #intendedText))
-
-				self._input:CaptureFocus()
-				self._input.Text = intendedText
-				self._input.CursorPosition = posCP
-				self._input.SelectionStart = posCP
-
-				self._text = intendedText
-				scheduleRecolor()
-			end)
-
-			task.delay(0.12, function()
-				if applied or self._destroyed then return end
-				if conn then conn:Disconnect() end
-
-				local intendedText, posCP = buildIntendedEnter(oldText, aCP, bCP)
-				print(("[%.3f] [ENTER] failsafe apply; len=%d"):format(os.clock(), #intendedText))
-
-				self._input:CaptureFocus()
-				self._input.Text = intendedText
-				self._input.CursorPosition = posCP
-				self._input.SelectionStart = posCP
-
-				self._text = intendedText
-				scheduleRecolor()
-			end)
-		end
-	end)
-
-	--------------------------------------------------------------------
 	-- Initial paint
-	--------------------------------------------------------------------
 	recolorNow()
 
-	--------------------------------------------------------------------
 	-- Public API
-	--------------------------------------------------------------------
 	function self:SetText(t: string?)
 		if self._destroyed then return end
 		self._text = t or ""
