@@ -12545,7 +12545,7 @@ addcmd("jerk", {}, function(args, speaker)
     humanoid.Died:Connect(stopTomfoolery)
 
     while task.wait() do
-        if not jorkin then continue end
+        --if not jorkin then continue end
 
         local isR15 = r15(speaker)
         if not track then
@@ -12618,14 +12618,14 @@ end)
 
 addcmd("mutevc", {}, function(args, speaker)
     for _, plr in getPlayer(args[1], speaker) do
-        if Players[plr] == speaker then continue end
+        --if Players[plr] == speaker then continue end
         Services.VoiceChatInternal:SubscribePause(Players[plr].UserId, true)
     end
 end)
 
 addcmd("unmutevc", {}, function(args, speaker)
     for _, plr in getPlayer(args[1], speaker) do
-        if Players[plr] == speaker then continue end
+        --if Players[plr] == speaker then continue end
         Services.VoiceChatInternal:SubscribePause(Players[plr].UserId, false)
     end
 end)
