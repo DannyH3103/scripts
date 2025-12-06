@@ -1,0 +1,75 @@
+(function() {
+    // 1. Save the current URL to load into the iframe
+    const targetUrl = window.location.href;
+
+    // 2. Create the iframe element
+    const iframe = document.createElement('iframe');
+    iframe.src = targetUrl;
+    iframe.style.position = 'fixed';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+
+    // 3. Completely reset the current document
+    // We overwrite the document structure but keep the script running
+    document.open();
+    document.write('<!DOCTYPE html><html><head></head><body></body></html>');
+    document.close();
+
+    // 4. Append the iframe to the new clean body
+    document.body.appendChild(iframe);
+
+    // Variables to track state
+    let lastUrl = targetUrl;
+    let lastTitle = document.title;
+
+    // 5. Function to update the Parent Favicon based on the Iframe
+    function updateFavicon(iframeDocument) {
+        const iframeIcon = iframeDocument.querySelector('link[rel*="icon"]');
+        if (iframeIcon) {
+            let parentIcon = document.querySelector('link[rel*="icon"]');
+            if (!parentIcon) {
+                parentIcon = document.createElement('link');
+                parentIcon.rel = 'shortcut icon';
+                document.head.appendChild(parentIcon);
+            }
+            parentIcon.href = iframeIcon.href;
+            parentIcon.type = iframeIcon.type;
+        }
+    }
+
+    // 6. Polling loop to sync URL, Title, and Favicon
+    // We use polling because `onload` doesn't catch History API changes (SPAs) inside the iframe
+    setInterval(() => {
+        try {
+            // Accessing contentWindow requires Same-Origin
+            const iframeWin = iframe.contentWindow;
+            const iframeDoc = iframe.contentDocument;
+
+            if (!iframeWin || !iframeDoc) return;
+
+            // Sync Title
+            if (iframeDoc.title !== document.title) {
+                document.title = iframeDoc.title;
+            }
+
+            // Sync Favicon
+            updateFavicon(iframeDoc);
+
+            // Sync URL (History API)
+            const currentIframeUrl = iframeWin.location.href;
+            if (currentIframeUrl !== lastUrl) {
+                // Update the browser's address bar without reloading
+                history.pushState(null, iframeDoc.title, currentIframeUrl);
+                lastUrl = currentIframeUrl;
+            }
+
+        } catch (e) {
+            // This usually happens if the iframe navigates to a different origin (Cross-Origin),
+            // which blocks access to .location and .document due to security policies.
+            console.log("Cannot access iframe content (likely cross-origin navigation).");
+        }
+    }, 200); // Check every 200ms
+})();
