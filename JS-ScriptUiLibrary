@@ -171,6 +171,35 @@
                 width: 40px; height: 25px; border: none; padding: 0;
                 background: transparent; cursor: pointer;
             }
+            
+            /* --- NEW ELEMENTS (Label & Paragraph) --- */
+            .ui-lib-label-element {
+                background-color: #242424;
+                padding: 9px;
+                border-radius: 4px;
+                border: 1px solid #2e2e2e;
+                color: #fff;
+                font-size: 14px;
+                font-weight: 700;
+            }
+            
+            .ui-lib-paragraph {
+                background-color: #242424;
+                padding: 10px;
+                border-radius: 4px;
+                border: 1px solid #2e2e2e;
+                color: #aaa;
+                font-size: 13px;
+                line-height: 1.4;
+            }
+            .ui-lib-paragraph-title {
+                color: #fff;
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 5px;
+                display: block;
+            }
+
             ::-webkit-scrollbar { width: 5px; }
             ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
         `;
@@ -180,21 +209,17 @@
     // --- LIBRARY CLASS ---
     class UILibrary {
         constructor(title = "UI Library") {
-            // Create a dedicated wrapper for this instance
             this.wrapper = document.createElement('div');
             this.wrapper.className = 'ui-lib-wrapper';
             document.body.appendChild(this.wrapper);
 
-            // Notification Container (Scoped to this wrapper)
             this.notifyContainer = document.createElement('div');
             this.notifyContainer.className = 'ui-lib-notify-container';
             this.wrapper.appendChild(this.notifyContainer);
 
-            // Window
             this.window = document.createElement('div');
             this.window.className = 'ui-lib-window';
             
-            // Random offset for stacking multiple windows
             const offset = Math.floor(Math.random() * 50);
             this.window.style.top = (50 + offset) + 'px';
             this.window.style.left = (50 + offset) + 'px';
@@ -205,14 +230,10 @@
             header.className = 'ui-lib-header';
             header.innerHTML = `<span class="ui-lib-title">${title}</span>`;
             
-            // Bring to front on click
-            this.window.addEventListener('mousedown', () => {
-                // You could implement Z-index sorting here if desired
-            });
+            this.window.addEventListener('mousedown', () => {});
 
             this.window.appendChild(header);
 
-            // Dragging
             let isDragging = false, offsetX, offsetY;
             header.addEventListener('mousedown', (e) => {
                 isDragging = true;
@@ -242,11 +263,16 @@
             this.tabs = [];
         }
 
-        // --- NEW: DESTROY FUNCTION ---
+        setVisibility(visible) {
+            if (this.window) {
+                this.window.style.display = visible ? 'flex' : 'none';
+            }
+        }
+
         destroy() {
             if (this.wrapper) {
                 this.wrapper.remove();
-                this.wrapper = null; // Prevent errors if called twice
+                this.wrapper = null; 
             }
         }
 
@@ -307,6 +333,37 @@
             label.className = 'ui-lib-section-label';
             label.innerText = text;
             this.container.appendChild(label);
+        }
+
+        // --- NEW: ADD LABEL (Boxed Text) ---
+        addLabel(text) {
+            const label = document.createElement('div');
+            label.className = 'ui-lib-label-element';
+            label.innerText = text;
+            this.container.appendChild(label);
+            return {
+                update: (newText) => label.innerText = newText
+            };
+        }
+
+        // --- NEW: ADD PARAGRAPH (Title + Text Box) ---
+        addParagraph(title, content) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ui-lib-paragraph';
+            
+            wrapper.innerHTML = `
+                <span class="ui-lib-paragraph-title">${title}</span>
+                <span class="ui-lib-paragraph-content">${content}</span>
+            `;
+
+            this.container.appendChild(wrapper);
+            
+            return {
+                update: (newTitle, newContent) => {
+                    wrapper.querySelector('.ui-lib-paragraph-title').innerText = newTitle;
+                    wrapper.querySelector('.ui-lib-paragraph-content').innerText = newContent;
+                }
+            };
         }
 
         addButton(text, callback) {
