@@ -1,221 +1,224 @@
 (function() {
-    // --- 1. PREVENT DUPLICATE CSS ---
-    const styleId = 'solar-ui-styles';
-    if (!document.getElementById(styleId)) {
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.innerHTML = `
-            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-            
-            /* Reset */
-            .ui-lib-wrapper * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
-
-            /* Notification System */
-            .ui-lib-notify-container {
-                position: fixed; bottom: 20px; right: 20px;
-                display: flex; flex-direction: column; gap: 10px;
-                z-index: 20000; pointer-events: none;
-            }
-            .ui-lib-notify {
-                width: 300px; background: #1a1a1a; 
-                padding: 12px 15px; border-radius: 4px; 
-                box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-                color: #fff; font-size: 13px; pointer-events: auto;
-                border: 1px solid #2e2e2e;
-                display: flex; flex-direction: column;
-                position: relative; overflow: hidden;
-                animation: slideIn 0.3s ease-out;
-            }
-            .ui-lib-notify.success { border-left: 4px solid #4caf50; }
-            .ui-lib-notify.warn { border-left: 4px solid #ff9800; }
-            .ui-lib-notify.error { border-left: 4px solid #f44336; }
-            .ui-lib-notify.info { border-left: 4px solid #2196f3; }
-
-            .ui-lib-notify-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #fff; }
-            .ui-lib-notify-msg { color: #bbb; font-size: 12px; }
-            
-            @keyframes slideIn { 
-                from { transform: translateX(100%); opacity: 0; } 
-                to { transform: translateX(0); opacity: 1; } 
-            }
-
-            /* Main Window */
-            .ui-lib-window {
-                position: fixed; top: 50px; left: 50px;
-                width: 550px; height: 380px;
-                background-color: #1a1a1a;
-                border-radius: 6px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                display: flex; flex-direction: column;
-                overflow: hidden; z-index: 10000;
-                border: 1px solid #2e2e2e;
-                color: #fff;
-            }
-
-            /* Header */
-            .ui-lib-header {
-                height: 35px; background-color: #242424;
-                display: flex; align-items: center; padding: 0 15px;
-                cursor: grab; border-bottom: 1px solid #2e2e2e; user-select: none;
-            }
-            .ui-lib-header:active { cursor: grabbing; }
-            .ui-lib-title { font-weight: 700; font-size: 14px; color: #ddd; }
-
-            /* Body & Sidebar */
-            .ui-lib-body { display: flex; height: 100%; overflow: hidden; }
-            .ui-lib-sidebar {
-                width: 135px; background-color: #202020;
-                border-right: 1px solid #2e2e2e; padding: 10px;
-                display: flex; flex-direction: column; gap: 5px; overflow-y: auto;
-            }
-            .ui-lib-tab-btn {
-                background: transparent; border: none; color: #888;
-                padding: 8px 10px; text-align: left; cursor: pointer;
-                border-radius: 4px; transition: 0.2s; font-size: 13px;
-            }
-            .ui-lib-tab-btn:hover { background-color: #2a2a2a; color: #fff; }
-            .ui-lib-tab-btn.active { background-color: #3a3a3a; color: #fff; font-weight: 500; }
-
-            /* Content Area */
-            .ui-lib-content { flex: 1; padding: 15px; overflow-y: auto; background-color: #1a1a1a; position: relative; }
-            .ui-lib-tab-content { display: none; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-            .ui-lib-tab-content.active { display: flex; }
-
-            /* Elements */
-            .ui-lib-section-label { font-size: 12px; color: #666; margin: 8px 0 4px 0; text-transform: uppercase; font-weight: 700; }
-            
-            /* Button */
-            .ui-lib-button {
-                background-color: #242424; color: #fff; border: 1px solid #2e2e2e;
-                padding: 9px; border-radius: 4px; cursor: pointer;
-                transition: 0.2s; text-align: left; font-size: 13px; width: 100%;
-            }
-            .ui-lib-button:hover { background-color: #2a2a2a; border-color: #444; }
-            .ui-lib-button:active { transform: translateY(1px); }
-
-            /* Toggle */
-            .ui-lib-toggle {
-                display: flex; justify-content: space-between; align-items: center;
-                background-color: #242424; padding: 8px 10px; border-radius: 4px;
-                border: 1px solid #2e2e2e; cursor: pointer;
-            }
-            .ui-lib-toggle-label { font-size: 13px; }
-            .ui-lib-toggle-box {
-                width: 36px; height: 20px; background-color: #111;
-                border-radius: 10px; position: relative; transition: 0.3s;
-            }
-            .ui-lib-toggle-circle {
-                width: 16px; height: 16px; background-color: #444;
-                border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.3s;
-            }
-            .ui-lib-toggle.active .ui-lib-toggle-box { background-color: #4caf50; }
-            .ui-lib-toggle.active .ui-lib-toggle-circle { left: 18px; background-color: #fff; }
-
-            /* Slider */
-            .ui-lib-slider-container {
-                background-color: #242424; padding: 10px; border-radius: 4px; border: 1px solid #2e2e2e;
-            }
-            .ui-lib-slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-            .ui-lib-slider-bg {
-                width: 100%; height: 6px; background-color: #111;
-                border-radius: 3px; position: relative; cursor: pointer;
-            }
-            .ui-lib-slider-fill {
-                height: 100%; background-color: #4caf50; border-radius: 3px; width: 50%; pointer-events: none;
-            }
-
-            /* Input */
-            .ui-lib-input-wrapper {
-                background-color: #242424; border: 1px solid #2e2e2e;
-                padding: 8px; border-radius: 4px;
-            }
-            .ui-lib-input {
-                width: 100%; background: transparent; border: none;
-                color: #fff; font-size: 13px; outline: none;
-            }
-            .ui-lib-input::placeholder { color: #666; }
-
-            /* Dropdown */
-            .ui-lib-dropdown { position: relative; width: 100%; }
-            .ui-lib-dropdown-btn {
-                background-color: #242424; color: #fff; border: 1px solid #2e2e2e;
-                padding: 9px 30px 9px 10px; border-radius: 4px; cursor: pointer;
-                text-align: left; font-size: 13px; width: 100%; position: relative;
-            }
-            .ui-lib-dropdown-icon {
-                position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-                font-size: 10px; color: #888; pointer-events: none;
-            }
-            .ui-lib-dropdown-list {
-                position: absolute; top: 105%; left: 0; right: 0;
-                background-color: #242424; border: 1px solid #2e2e2e;
-                border-radius: 4px; display: none; flex-direction: column;
-                z-index: 50; max-height: 150px; overflow-y: auto;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            }
-            .ui-lib-dropdown-list.open { display: flex; }
-            .ui-lib-dropdown-item {
-                padding: 8px 10px; font-size: 13px; color: #ccc;
-                cursor: pointer; transition: 0.1s;
-            }
-            .ui-lib-dropdown-item:hover { background-color: #4caf50; color: #fff; }
-
-            /* Color Picker */
-            .ui-lib-color-picker {
-                display: flex; justify-content: space-between; align-items: center;
-                background-color: #242424; padding: 8px 10px; border-radius: 4px;
-                border: 1px solid #2e2e2e;
-            }
-            .ui-lib-color-label { font-size: 13px; color: #fff; }
-            .ui-lib-color-input {
-                width: 40px; height: 25px; border: none; padding: 0;
-                background: transparent; cursor: pointer;
-            }
-            
-            /* Label & Paragraph */
-            .ui-lib-label-element {
-                background-color: #242424;
-                padding: 9px;
-                border-radius: 4px;
-                border: 1px solid #2e2e2e;
-                color: #fff;
-                font-size: 14px;
-                font-weight: 700;
-            }
-            
-            .ui-lib-paragraph {
-                background-color: #242424;
-                padding: 10px;
-                border-radius: 4px;
-                border: 1px solid #2e2e2e;
-                color: #aaa;
-                font-size: 13px;
-                line-height: 1.4;
-            }
-            .ui-lib-paragraph-title {
-                color: #fff;
-                font-size: 14px;
-                font-weight: 700;
-                margin-bottom: 5px;
-                display: block;
-            }
-
-            /* --- SCOPED SCROLLBAR FIX --- */
-            /* Applies ONLY to elements inside the UI Library Wrapper */
-            .ui-lib-wrapper ::-webkit-scrollbar { width: 5px; height: 5px; }
-            .ui-lib-wrapper ::-webkit-scrollbar-track { background: transparent; }
-            .ui-lib-wrapper ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
-            .ui-lib-wrapper ::-webkit-scrollbar-thumb:hover { background: #444; }
-        `;
-        document.head.appendChild(style);
-    }
-
     // --- LIBRARY CLASS ---
     class UILibrary {
         constructor(title = "UI Library") {
+            // 1. Create a "Host" Element
+            // This is the only element that actually sits in the real website's DOM.
+            this.host = document.createElement('div');
+            this.host.id = 'solar-ui-host';
+            // Make sure the host itself doesn't interfere with the page layout
+            this.host.style.cssText = "position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none;";
+            document.body.appendChild(this.host);
+
+            // 2. Attach Shadow DOM
+            // 'open' mode means we can still access it via JavaScript if needed
+            this.shadow = this.host.attachShadow({ mode: 'open' });
+
+            // 3. Inject CSS *INSIDE* the Shadow DOM
+            // This ensures these styles ONLY apply to your UI, and external styles are blocked.
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+                
+                /* Reset internal styles just to be safe */
+                :host { all: initial; font-family: 'Roboto', sans-serif; }
+                * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+
+                /* Wrapper to handle pointer events correctly */
+                .ui-lib-wrapper {
+                    pointer-events: auto; /* Re-enable clicks since host is none */
+                }
+
+                /* Notification System */
+                .ui-lib-notify-container {
+                    position: fixed; bottom: 20px; right: 20px;
+                    display: flex; flex-direction: column; gap: 10px;
+                    z-index: 20000; pointer-events: none;
+                }
+                .ui-lib-notify {
+                    width: 300px; background: #1a1a1a; 
+                    padding: 12px 15px; border-radius: 4px; 
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+                    color: #fff; font-size: 13px; pointer-events: auto;
+                    border: 1px solid #2e2e2e;
+                    display: flex; flex-direction: column;
+                    position: relative; overflow: hidden;
+                    animation: slideIn 0.3s ease-out;
+                }
+                .ui-lib-notify.success { border-left: 4px solid #4caf50; }
+                .ui-lib-notify.warn { border-left: 4px solid #ff9800; }
+                .ui-lib-notify.error { border-left: 4px solid #f44336; }
+                .ui-lib-notify.info { border-left: 4px solid #2196f3; }
+
+                .ui-lib-notify-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #fff; }
+                .ui-lib-notify-msg { color: #bbb; font-size: 12px; }
+                
+                @keyframes slideIn { 
+                    from { transform: translateX(100%); opacity: 0; } 
+                    to { transform: translateX(0); opacity: 1; } 
+                }
+
+                /* Main Window */
+                .ui-lib-window {
+                    position: fixed; top: 50px; left: 50px;
+                    width: 550px; height: 380px;
+                    background-color: #1a1a1a;
+                    border-radius: 6px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    display: flex; flex-direction: column;
+                    overflow: hidden; 
+                    border: 1px solid #2e2e2e;
+                    color: #fff;
+                }
+
+                /* Header */
+                .ui-lib-header {
+                    height: 35px; background-color: #242424;
+                    display: flex; align-items: center; padding: 0 15px;
+                    cursor: grab; border-bottom: 1px solid #2e2e2e; user-select: none;
+                }
+                .ui-lib-header:active { cursor: grabbing; }
+                .ui-lib-title { font-weight: 700; font-size: 14px; color: #ddd; }
+
+                /* Body & Sidebar */
+                .ui-lib-body { display: flex; height: 100%; overflow: hidden; }
+                .ui-lib-sidebar {
+                    width: 135px; background-color: #202020;
+                    border-right: 1px solid #2e2e2e; padding: 10px;
+                    display: flex; flex-direction: column; gap: 5px; overflow-y: auto;
+                }
+                .ui-lib-tab-btn {
+                    background: transparent; border: none; color: #888;
+                    padding: 8px 10px; text-align: left; cursor: pointer;
+                    border-radius: 4px; transition: 0.2s; font-size: 13px;
+                }
+                .ui-lib-tab-btn:hover { background-color: #2a2a2a; color: #fff; }
+                .ui-lib-tab-btn.active { background-color: #3a3a3a; color: #fff; font-weight: 500; }
+
+                /* Content Area */
+                .ui-lib-content { flex: 1; padding: 15px; overflow-y: auto; background-color: #1a1a1a; position: relative; }
+                .ui-lib-tab-content { display: none; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+                .ui-lib-tab-content.active { display: flex; }
+
+                /* Elements */
+                .ui-lib-section-label { font-size: 12px; color: #666; margin: 8px 0 4px 0; text-transform: uppercase; font-weight: 700; }
+                
+                /* Button */
+                .ui-lib-button {
+                    background-color: #242424; color: #fff; border: 1px solid #2e2e2e;
+                    padding: 9px; border-radius: 4px; cursor: pointer;
+                    transition: 0.2s; text-align: left; font-size: 13px; width: 100%;
+                }
+                .ui-lib-button:hover { background-color: #2a2a2a; border-color: #444; }
+                .ui-lib-button:active { transform: translateY(1px); }
+
+                /* Toggle */
+                .ui-lib-toggle {
+                    display: flex; justify-content: space-between; align-items: center;
+                    background-color: #242424; padding: 8px 10px; border-radius: 4px;
+                    border: 1px solid #2e2e2e; cursor: pointer;
+                }
+                .ui-lib-toggle-label { font-size: 13px; }
+                .ui-lib-toggle-box {
+                    width: 36px; height: 20px; background-color: #111;
+                    border-radius: 10px; position: relative; transition: 0.3s;
+                }
+                .ui-lib-toggle-circle {
+                    width: 16px; height: 16px; background-color: #444;
+                    border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.3s;
+                }
+                .ui-lib-toggle.active .ui-lib-toggle-box { background-color: #4caf50; }
+                .ui-lib-toggle.active .ui-lib-toggle-circle { left: 18px; background-color: #fff; }
+
+                /* Slider */
+                .ui-lib-slider-container {
+                    background-color: #242424; padding: 10px; border-radius: 4px; border: 1px solid #2e2e2e;
+                }
+                .ui-lib-slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+                .ui-lib-slider-bg {
+                    width: 100%; height: 6px; background-color: #111;
+                    border-radius: 3px; position: relative; cursor: pointer;
+                }
+                .ui-lib-slider-fill {
+                    height: 100%; background-color: #4caf50; border-radius: 3px; width: 50%; pointer-events: none;
+                }
+
+                /* Input */
+                .ui-lib-input-wrapper {
+                    background-color: #242424; border: 1px solid #2e2e2e;
+                    padding: 8px; border-radius: 4px;
+                }
+                .ui-lib-input {
+                    width: 100%; background: transparent; border: none;
+                    color: #fff; font-size: 13px; outline: none;
+                }
+                .ui-lib-input::placeholder { color: #666; }
+
+                /* Dropdown */
+                .ui-lib-dropdown { position: relative; width: 100%; }
+                .ui-lib-dropdown-btn {
+                    background-color: #242424; color: #fff; border: 1px solid #2e2e2e;
+                    padding: 9px 30px 9px 10px; border-radius: 4px; cursor: pointer;
+                    text-align: left; font-size: 13px; width: 100%; position: relative;
+                }
+                .ui-lib-dropdown-icon {
+                    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+                    font-size: 10px; color: #888; pointer-events: none;
+                }
+                .ui-lib-dropdown-list {
+                    position: absolute; top: 105%; left: 0; right: 0;
+                    background-color: #242424; border: 1px solid #2e2e2e;
+                    border-radius: 4px; display: none; flex-direction: column;
+                    z-index: 50; max-height: 150px; overflow-y: auto;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                }
+                .ui-lib-dropdown-list.open { display: flex; }
+                .ui-lib-dropdown-item {
+                    padding: 8px 10px; font-size: 13px; color: #ccc;
+                    cursor: pointer; transition: 0.1s;
+                }
+                .ui-lib-dropdown-item:hover { background-color: #4caf50; color: #fff; }
+
+                /* Color Picker */
+                .ui-lib-color-picker {
+                    display: flex; justify-content: space-between; align-items: center;
+                    background-color: #242424; padding: 8px 10px; border-radius: 4px;
+                    border: 1px solid #2e2e2e;
+                }
+                .ui-lib-color-label { font-size: 13px; color: #fff; }
+                .ui-lib-color-input {
+                    width: 40px; height: 25px; border: none; padding: 0;
+                    background: transparent; cursor: pointer;
+                }
+                
+                /* Label & Paragraph */
+                .ui-lib-label-element {
+                    background-color: #242424; padding: 9px;
+                    border-radius: 4px; border: 1px solid #2e2e2e;
+                    color: #fff; font-size: 14px; font-weight: 700;
+                }
+                .ui-lib-paragraph {
+                    background-color: #242424; padding: 10px;
+                    border-radius: 4px; border: 1px solid #2e2e2e;
+                    color: #aaa; font-size: 13px; line-height: 1.4;
+                }
+                .ui-lib-paragraph-title {
+                    color: #fff; font-size: 14px; font-weight: 700;
+                    margin-bottom: 5px; display: block;
+                }
+
+                /* Custom Scrollbar (Scoped) */
+                ::-webkit-scrollbar { width: 5px; height: 5px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
+                ::-webkit-scrollbar-thumb:hover { background: #444; }
+            `;
+            this.shadow.appendChild(style);
+
+            // 4. Build Structure INSIDE Shadow
             this.wrapper = document.createElement('div');
             this.wrapper.className = 'ui-lib-wrapper';
-            document.body.appendChild(this.wrapper);
+            this.shadow.appendChild(this.wrapper);
 
             this.notifyContainer = document.createElement('div');
             this.notifyContainer.className = 'ui-lib-notify-container';
@@ -224,6 +227,7 @@
             this.window = document.createElement('div');
             this.window.className = 'ui-lib-window';
             
+            // Random Offset
             const offset = Math.floor(Math.random() * 50);
             this.window.style.top = (50 + offset) + 'px';
             this.window.style.left = (50 + offset) + 'px';
@@ -233,23 +237,25 @@
             const header = document.createElement('div');
             header.className = 'ui-lib-header';
             header.innerHTML = `<span class="ui-lib-title">${title}</span>`;
-            
-            this.window.addEventListener('mousedown', () => {});
-
             this.window.appendChild(header);
 
+            // 5. Dragging Logic (Must remain on document for smooth dragging)
             let isDragging = false, offsetX, offsetY;
             header.addEventListener('mousedown', (e) => {
                 isDragging = true;
-                offsetX = e.clientX - this.window.offsetLeft;
-                offsetY = e.clientY - this.window.offsetTop;
+                // Calculate offset based on current window position
+                const rect = this.window.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
             });
+
             document.addEventListener('mousemove', (e) => {
                 if (isDragging) {
                     this.window.style.left = `${e.clientX - offsetX}px`;
                     this.window.style.top = `${e.clientY - offsetY}px`;
                 }
             });
+
             document.addEventListener('mouseup', () => isDragging = false);
 
             const body = document.createElement('div');
@@ -274,9 +280,9 @@
         }
 
         destroy() {
-            if (this.wrapper) {
-                this.wrapper.remove();
-                this.wrapper = null; 
+            if (this.host) {
+                this.host.remove();
+                this.host = null; 
             }
         }
 
@@ -350,14 +356,8 @@
         addParagraph(title, content) {
             const wrapper = document.createElement('div');
             wrapper.className = 'ui-lib-paragraph';
-            
-            wrapper.innerHTML = `
-                <span class="ui-lib-paragraph-title">${title}</span>
-                <span class="ui-lib-paragraph-content">${content}</span>
-            `;
-
+            wrapper.innerHTML = `<span class="ui-lib-paragraph-title">${title}</span><span class="ui-lib-paragraph-content">${content}</span>`;
             this.container.appendChild(wrapper);
-            
             return {
                 update: (newTitle, newContent) => {
                     wrapper.querySelector('.ui-lib-paragraph-title').innerText = newTitle;
@@ -380,7 +380,6 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'ui-lib-toggle' + (active ? ' active' : '');
             wrapper.innerHTML = `<span class="ui-lib-toggle-label">${text}</span><div class="ui-lib-toggle-box"><div class="ui-lib-toggle-circle"></div></div>`;
-            
             wrapper.onclick = () => {
                 active = !active;
                 wrapper.classList.toggle('active', active);
@@ -395,7 +394,6 @@
             const container = document.createElement('div');
             container.className = 'ui-lib-slider-container';
             container.innerHTML = `<div class="ui-lib-slider-header"><span>${text}</span><span class="val-display">${value}</span></div><div class="ui-lib-slider-bg"><div class="ui-lib-slider-fill" style="width: ${((value - min) / (max - min)) * 100}%"></div></div>`;
-            
             const bg = container.querySelector('.ui-lib-slider-bg');
             const fill = container.querySelector('.ui-lib-slider-fill');
             const display = container.querySelector('.val-display');
@@ -436,16 +434,12 @@
         addDropdown(text, options, callback) {
             const container = document.createElement('div');
             container.className = 'ui-lib-dropdown';
-            
             let current = options[0];
-
             const btn = document.createElement('button');
             btn.className = 'ui-lib-dropdown-btn';
             btn.innerHTML = `${text}: ${current} <span class="ui-lib-dropdown-icon">▼</span>`;
-
             const list = document.createElement('div');
             list.className = 'ui-lib-dropdown-list';
-
             const renderOptions = (opts) => {
                 list.innerHTML = '';
                 opts.forEach(opt => {
@@ -461,53 +455,32 @@
                     list.appendChild(item);
                 });
             };
-
             renderOptions(options);
-
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                list.classList.toggle('open');
-            };
-
-            document.addEventListener('click', (e) => { 
-                if(!container.contains(e.target)) {
-                    list.classList.remove('open');
-                }
-            });
-
+            btn.onclick = (e) => { e.stopPropagation(); list.classList.toggle('open'); };
+            document.addEventListener('click', (e) => { if(!container.contains(e.target)) list.classList.remove('open'); });
             container.appendChild(btn);
             container.appendChild(list);
             this.container.appendChild(container);
-
-            return {
-                update: (newOpts) => { renderOptions(newOpts); if(newOpts.length) current = newOpts[0]; },
-                get: () => current
-            };
+            return { update: (newOpts) => { renderOptions(newOpts); if(newOpts.length) current = newOpts[0]; }, get: () => current };
         }
 
         addColorPicker(text, defaultColor, callback) {
             const container = document.createElement('div');
             container.className = 'ui-lib-color-picker';
-            
             const label = document.createElement('span');
             label.className = 'ui-lib-color-label';
             label.innerText = text;
-
             const input = document.createElement('input');
             input.type = 'color';
             input.className = 'ui-lib-color-input';
             input.value = defaultColor || "#ffffff";
-
             input.oninput = () => callback(input.value);
-
             container.appendChild(label);
             container.appendChild(input);
             this.container.appendChild(container);
-
             return { update: (col) => input.value = col, get: () => input.value };
         }
     }
 
-    // Expose Library
     window.Library = UILibrary;
 })();
