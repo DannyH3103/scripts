@@ -1,28 +1,36 @@
 (function() {
     // --- OPTIMIZATION GUARD ---
-    // If the library is already defined, stop execution immediately.
     if (window.Library) {
-        console.warn("UI Library is already initialized.");
+        console.warn("Solaris UI Library is already initialized.");
         return;
+    }
+
+    // --- 1. LOAD FONTS GLOBALLY ---
+    // We inject the font into the main document head to ensure it loads correctly.
+    const fontId = 'solar-ui-font';
+    if (!document.getElementById(fontId)) {
+        const link = document.createElement('link');
+        link.id = fontId;
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap';
+        document.head.appendChild(link);
     }
 
     // --- LIBRARY CLASS ---
     class UILibrary {
         constructor(title = "UI Library") {
-            // 1. Create Host (The only element in the real DOM)
+            // 2. Create Host (The only element in the real DOM)
             this.host = document.createElement('div');
             this.host.style.cssText = "position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none;";
             document.body.appendChild(this.host);
 
-            // 2. Attach Shadow DOM (Isolates CSS completely)
+            // 3. Attach Shadow DOM (Isolates CSS completely)
             this.shadow = this.host.attachShadow({ mode: 'open' });
 
-            // 3. Inject Styles (Scoped to Shadow DOM)
+            // 4. Inject Styles (Scoped to Shadow DOM)
             const style = document.createElement('style');
             style.innerHTML = `
-                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-                
-                /* Global Reset for Shadow DOM */
+                /* Reset & Font Application */
                 :host { all: initial; font-family: 'Roboto', sans-serif; }
                 * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
 
@@ -184,7 +192,7 @@
                     width: 40px; height: 25px; border: none; padding: 0;
                     background: transparent; cursor: pointer;
                 }
-
+                
                 .ui-lib-label-element {
                     background-color: #242424; padding: 9px;
                     border-radius: 4px; border: 1px solid #2e2e2e;
@@ -208,7 +216,7 @@
             `;
             this.shadow.appendChild(style);
 
-            // 4. Build Structure
+            // 5. Build Structure
             this.wrapper = document.createElement('div');
             this.wrapper.className = 'ui-lib-wrapper';
             this.shadow.appendChild(this.wrapper);
@@ -231,7 +239,7 @@
             header.innerHTML = `<span class="ui-lib-title">${title}</span>`;
             this.window.appendChild(header);
 
-            // 5. Dragging
+            // 6. Dragging
             let isDragging = false, offsetX, offsetY;
             header.addEventListener('mousedown', (e) => {
                 isDragging = true;
