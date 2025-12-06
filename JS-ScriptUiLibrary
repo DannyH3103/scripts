@@ -1,33 +1,33 @@
 (function() {
+    // --- OPTIMIZATION GUARD ---
+    // If the library is already defined, stop execution immediately.
+    if (window.Library) {
+        console.warn("UI Library is already initialized.");
+        return;
+    }
+
     // --- LIBRARY CLASS ---
     class UILibrary {
         constructor(title = "UI Library") {
-            // 1. Create a "Host" Element
-            // This is the only element that actually sits in the real website's DOM.
+            // 1. Create Host (The only element in the real DOM)
             this.host = document.createElement('div');
-            this.host.id = 'solar-ui-host';
-            // Make sure the host itself doesn't interfere with the page layout
             this.host.style.cssText = "position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none;";
             document.body.appendChild(this.host);
 
-            // 2. Attach Shadow DOM
-            // 'open' mode means we can still access it via JavaScript if needed
+            // 2. Attach Shadow DOM (Isolates CSS completely)
             this.shadow = this.host.attachShadow({ mode: 'open' });
 
-            // 3. Inject CSS *INSIDE* the Shadow DOM
-            // This ensures these styles ONLY apply to your UI, and external styles are blocked.
+            // 3. Inject Styles (Scoped to Shadow DOM)
             const style = document.createElement('style');
             style.innerHTML = `
                 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
                 
-                /* Reset internal styles just to be safe */
+                /* Global Reset for Shadow DOM */
                 :host { all: initial; font-family: 'Roboto', sans-serif; }
                 * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
 
-                /* Wrapper to handle pointer events correctly */
-                .ui-lib-wrapper {
-                    pointer-events: auto; /* Re-enable clicks since host is none */
-                }
+                /* Wrapper */
+                .ui-lib-wrapper { pointer-events: auto; }
 
                 /* Notification System */
                 .ui-lib-notify-container {
@@ -103,7 +103,6 @@
                 /* Elements */
                 .ui-lib-section-label { font-size: 12px; color: #666; margin: 8px 0 4px 0; text-transform: uppercase; font-weight: 700; }
                 
-                /* Button */
                 .ui-lib-button {
                     background-color: #242424; color: #fff; border: 1px solid #2e2e2e;
                     padding: 9px; border-radius: 4px; cursor: pointer;
@@ -112,7 +111,6 @@
                 .ui-lib-button:hover { background-color: #2a2a2a; border-color: #444; }
                 .ui-lib-button:active { transform: translateY(1px); }
 
-                /* Toggle */
                 .ui-lib-toggle {
                     display: flex; justify-content: space-between; align-items: center;
                     background-color: #242424; padding: 8px 10px; border-radius: 4px;
@@ -130,7 +128,6 @@
                 .ui-lib-toggle.active .ui-lib-toggle-box { background-color: #4caf50; }
                 .ui-lib-toggle.active .ui-lib-toggle-circle { left: 18px; background-color: #fff; }
 
-                /* Slider */
                 .ui-lib-slider-container {
                     background-color: #242424; padding: 10px; border-radius: 4px; border: 1px solid #2e2e2e;
                 }
@@ -143,7 +140,6 @@
                     height: 100%; background-color: #4caf50; border-radius: 3px; width: 50%; pointer-events: none;
                 }
 
-                /* Input */
                 .ui-lib-input-wrapper {
                     background-color: #242424; border: 1px solid #2e2e2e;
                     padding: 8px; border-radius: 4px;
@@ -154,7 +150,6 @@
                 }
                 .ui-lib-input::placeholder { color: #666; }
 
-                /* Dropdown */
                 .ui-lib-dropdown { position: relative; width: 100%; }
                 .ui-lib-dropdown-btn {
                     background-color: #242424; color: #fff; border: 1px solid #2e2e2e;
@@ -179,7 +174,6 @@
                 }
                 .ui-lib-dropdown-item:hover { background-color: #4caf50; color: #fff; }
 
-                /* Color Picker */
                 .ui-lib-color-picker {
                     display: flex; justify-content: space-between; align-items: center;
                     background-color: #242424; padding: 8px 10px; border-radius: 4px;
@@ -190,8 +184,7 @@
                     width: 40px; height: 25px; border: none; padding: 0;
                     background: transparent; cursor: pointer;
                 }
-                
-                /* Label & Paragraph */
+
                 .ui-lib-label-element {
                     background-color: #242424; padding: 9px;
                     border-radius: 4px; border: 1px solid #2e2e2e;
@@ -207,7 +200,7 @@
                     margin-bottom: 5px; display: block;
                 }
 
-                /* Custom Scrollbar (Scoped) */
+                /* Scoped Scrollbar */
                 ::-webkit-scrollbar { width: 5px; height: 5px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
@@ -215,7 +208,7 @@
             `;
             this.shadow.appendChild(style);
 
-            // 4. Build Structure INSIDE Shadow
+            // 4. Build Structure
             this.wrapper = document.createElement('div');
             this.wrapper.className = 'ui-lib-wrapper';
             this.shadow.appendChild(this.wrapper);
@@ -227,7 +220,6 @@
             this.window = document.createElement('div');
             this.window.className = 'ui-lib-window';
             
-            // Random Offset
             const offset = Math.floor(Math.random() * 50);
             this.window.style.top = (50 + offset) + 'px';
             this.window.style.left = (50 + offset) + 'px';
@@ -239,11 +231,10 @@
             header.innerHTML = `<span class="ui-lib-title">${title}</span>`;
             this.window.appendChild(header);
 
-            // 5. Dragging Logic (Must remain on document for smooth dragging)
+            // 5. Dragging
             let isDragging = false, offsetX, offsetY;
             header.addEventListener('mousedown', (e) => {
                 isDragging = true;
-                // Calculate offset based on current window position
                 const rect = this.window.getBoundingClientRect();
                 offsetX = e.clientX - rect.left;
                 offsetY = e.clientY - rect.top;
@@ -482,5 +473,6 @@
         }
     }
 
+    // Assign to window
     window.Library = UILibrary;
 })();
