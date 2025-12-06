@@ -172,7 +172,7 @@
                 background: transparent; cursor: pointer;
             }
             
-            /* --- NEW ELEMENTS (Label & Paragraph) --- */
+            /* Label & Paragraph */
             .ui-lib-label-element {
                 background-color: #242424;
                 padding: 9px;
@@ -200,8 +200,12 @@
                 display: block;
             }
 
-            ::-webkit-scrollbar { width: 5px; }
-            ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
+            /* --- SCOPED SCROLLBAR FIX --- */
+            /* Applies ONLY to elements inside the UI Library Wrapper */
+            .ui-lib-wrapper ::-webkit-scrollbar { width: 5px; height: 5px; }
+            .ui-lib-wrapper ::-webkit-scrollbar-track { background: transparent; }
+            .ui-lib-wrapper ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
+            .ui-lib-wrapper ::-webkit-scrollbar-thumb:hover { background: #444; }
         `;
         document.head.appendChild(style);
     }
@@ -335,18 +339,14 @@
             this.container.appendChild(label);
         }
 
-        // --- NEW: ADD LABEL (Boxed Text) ---
         addLabel(text) {
             const label = document.createElement('div');
             label.className = 'ui-lib-label-element';
             label.innerText = text;
             this.container.appendChild(label);
-            return {
-                update: (newText) => label.innerText = newText
-            };
+            return { update: (newText) => label.innerText = newText };
         }
 
-        // --- NEW: ADD PARAGRAPH (Title + Text Box) ---
         addParagraph(title, content) {
             const wrapper = document.createElement('div');
             wrapper.className = 'ui-lib-paragraph';
