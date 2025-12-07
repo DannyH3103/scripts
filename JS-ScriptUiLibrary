@@ -6,7 +6,6 @@
     }
 
     // --- 1. LOAD FONTS GLOBALLY ---
-    // We inject the font into the main document head to ensure it loads correctly.
     const fontId = 'solar-ui-font';
     if (!document.getElementById(fontId)) {
         const link = document.createElement('link');
@@ -19,25 +18,22 @@
     // --- LIBRARY CLASS ---
     class UILibrary {
         constructor(title = "UI Library") {
-            // 2. Create Host (The only element in the real DOM)
+            // 2. Create Host
             this.host = document.createElement('div');
             this.host.style.cssText = "position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none;";
             document.body.appendChild(this.host);
 
-            // 3. Attach Shadow DOM (Isolates CSS completely)
+            // 3. Attach Shadow DOM
             this.shadow = this.host.attachShadow({ mode: 'open' });
 
-            // 4. Inject Styles (Scoped to Shadow DOM)
+            // 4. Inject Styles
             const style = document.createElement('style');
             style.innerHTML = `
-                /* Reset & Font Application */
                 :host { all: initial; font-family: 'Roboto', sans-serif; }
                 * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
-
-                /* Wrapper */
                 .ui-lib-wrapper { pointer-events: auto; }
 
-                /* Notification System */
+                /* Notifications */
                 .ui-lib-notify-container {
                     position: fixed; bottom: 20px; right: 20px;
                     display: flex; flex-direction: column; gap: 10px;
@@ -57,14 +53,9 @@
                 .ui-lib-notify.warn { border-left: 4px solid #ff9800; }
                 .ui-lib-notify.error { border-left: 4px solid #f44336; }
                 .ui-lib-notify.info { border-left: 4px solid #2196f3; }
-
                 .ui-lib-notify-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #fff; }
                 .ui-lib-notify-msg { color: #bbb; font-size: 12px; }
-                
-                @keyframes slideIn { 
-                    from { transform: translateX(100%); opacity: 0; } 
-                    to { transform: translateX(0); opacity: 1; } 
-                }
+                @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
                 /* Main Window */
                 .ui-lib-window {
@@ -84,17 +75,23 @@
                     height: 35px; background-color: #242424;
                     display: flex; align-items: center; padding: 0 15px;
                     cursor: grab; border-bottom: 1px solid #2e2e2e; user-select: none;
+                    touch-action: none; /* Important for Pointer Events */
                 }
                 .ui-lib-header:active { cursor: grabbing; }
                 .ui-lib-title { font-weight: 700; font-size: 14px; color: #ddd; }
 
-                /* Body & Sidebar */
+                /* Layout */
                 .ui-lib-body { display: flex; height: 100%; overflow: hidden; }
                 .ui-lib-sidebar {
                     width: 135px; background-color: #202020;
                     border-right: 1px solid #2e2e2e; padding: 10px;
                     display: flex; flex-direction: column; gap: 5px; overflow-y: auto;
                 }
+                .ui-lib-content { flex: 1; padding: 15px; overflow-y: auto; background-color: #1a1a1a; position: relative; }
+                .ui-lib-tab-content { display: none; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+                .ui-lib-tab-content.active { display: flex; }
+
+                /* Components */
                 .ui-lib-tab-btn {
                     background: transparent; border: none; color: #888;
                     padding: 8px 10px; text-align: left; cursor: pointer;
@@ -102,13 +99,7 @@
                 }
                 .ui-lib-tab-btn:hover { background-color: #2a2a2a; color: #fff; }
                 .ui-lib-tab-btn.active { background-color: #3a3a3a; color: #fff; font-weight: 500; }
-
-                /* Content Area */
-                .ui-lib-content { flex: 1; padding: 15px; overflow-y: auto; background-color: #1a1a1a; position: relative; }
-                .ui-lib-tab-content { display: none; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-                .ui-lib-tab-content.active { display: flex; }
-
-                /* Elements */
+                
                 .ui-lib-section-label { font-size: 12px; color: #666; margin: 8px 0 4px 0; text-transform: uppercase; font-weight: 700; }
                 
                 .ui-lib-button {
@@ -149,12 +140,10 @@
                 }
 
                 .ui-lib-input-wrapper {
-                    background-color: #242424; border: 1px solid #2e2e2e;
-                    padding: 8px; border-radius: 4px;
+                    background-color: #242424; border: 1px solid #2e2e2e; padding: 8px; border-radius: 4px;
                 }
                 .ui-lib-input {
-                    width: 100%; background: transparent; border: none;
-                    color: #fff; font-size: 13px; outline: none;
+                    width: 100%; background: transparent; border: none; color: #fff; font-size: 13px; outline: none;
                 }
                 .ui-lib-input::placeholder { color: #666; }
 
@@ -184,14 +173,10 @@
 
                 .ui-lib-color-picker {
                     display: flex; justify-content: space-between; align-items: center;
-                    background-color: #242424; padding: 8px 10px; border-radius: 4px;
-                    border: 1px solid #2e2e2e;
+                    background-color: #242424; padding: 8px 10px; border-radius: 4px; border: 1px solid #2e2e2e;
                 }
                 .ui-lib-color-label { font-size: 13px; color: #fff; }
-                .ui-lib-color-input {
-                    width: 40px; height: 25px; border: none; padding: 0;
-                    background: transparent; cursor: pointer;
-                }
+                .ui-lib-color-input { width: 40px; height: 25px; border: none; padding: 0; background: transparent; cursor: pointer; }
                 
                 .ui-lib-label-element {
                     background-color: #242424; padding: 9px;
@@ -204,11 +189,9 @@
                     color: #aaa; font-size: 13px; line-height: 1.4;
                 }
                 .ui-lib-paragraph-title {
-                    color: #fff; font-size: 14px; font-weight: 700;
-                    margin-bottom: 5px; display: block;
+                    color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 5px; display: block;
                 }
 
-                /* Scoped Scrollbar */
                 ::-webkit-scrollbar { width: 5px; height: 5px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
@@ -227,11 +210,9 @@
 
             this.window = document.createElement('div');
             this.window.className = 'ui-lib-window';
-            
             const offset = Math.floor(Math.random() * 50);
             this.window.style.top = (50 + offset) + 'px';
             this.window.style.left = (50 + offset) + 'px';
-            
             this.wrapper.appendChild(this.window);
             
             const header = document.createElement('div');
@@ -239,23 +220,35 @@
             header.innerHTML = `<span class="ui-lib-title">${title}</span>`;
             this.window.appendChild(header);
 
-            // 6. Dragging
-            let isDragging = false, offsetX, offsetY;
-            header.addEventListener('mousedown', (e) => {
+            // --- FIXED DRAGGING LOGIC (Pointer Events) ---
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            header.onpointerdown = (e) => {
                 isDragging = true;
+                // Capture pointer so we keep getting events even if mouse leaves the window/iframe
+                header.setPointerCapture(e.pointerId);
+                
                 const rect = this.window.getBoundingClientRect();
-                offsetX = e.clientX - rect.left;
-                offsetY = e.clientY - rect.top;
-            });
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = rect.left;
+                initialTop = rect.top;
+            };
 
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    this.window.style.left = `${e.clientX - offsetX}px`;
-                    this.window.style.top = `${e.clientY - offsetY}px`;
-                }
-            });
+            header.onpointermove = (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                this.window.style.left = `${initialLeft + dx}px`;
+                this.window.style.top = `${initialTop + dy}px`;
+            };
 
-            document.addEventListener('mouseup', () => isDragging = false);
+            header.onpointerup = (e) => {
+                isDragging = false;
+                header.releasePointerCapture(e.pointerId);
+            };
+            // ------------------------------------------------
 
             const body = document.createElement('div');
             body.className = 'ui-lib-body';
@@ -273,9 +266,7 @@
         }
 
         setVisibility(visible) {
-            if (this.window) {
-                this.window.style.display = visible ? 'flex' : 'none';
-            }
+            if (this.window) this.window.style.display = visible ? 'flex' : 'none';
         }
 
         destroy() {
@@ -288,11 +279,7 @@
         notify(title, msg, type = "info", duration = 3000) {
             const notif = document.createElement('div');
             notif.className = `ui-lib-notify ${type}`;
-            notif.innerHTML = `
-                <span class="ui-lib-notify-title">${title}</span>
-                <span class="ui-lib-notify-msg">${msg}</span>
-            `;
-            
+            notif.innerHTML = `<span class="ui-lib-notify-title">${title}</span><span class="ui-lib-notify-msg">${msg}</span>`;
             this.notifyContainer.appendChild(notif);
             setTimeout(() => {
                 notif.style.opacity = '0';
@@ -306,181 +293,95 @@
             const tabBtn = document.createElement('button');
             tabBtn.className = 'ui-lib-tab-btn';
             tabBtn.innerText = name;
-
             const tabContent = document.createElement('div');
             tabContent.className = 'ui-lib-tab-content';
-
             tabBtn.onclick = () => {
-                this.tabs.forEach(t => {
-                    t.btn.classList.remove('active');
-                    t.content.classList.remove('active');
-                });
+                this.tabs.forEach(t => { t.btn.classList.remove('active'); t.content.classList.remove('active'); });
                 tabBtn.classList.add('active');
                 tabContent.classList.add('active');
             };
-
-            if (this.tabs.length === 0) {
-                tabBtn.classList.add('active');
-                tabContent.classList.add('active');
-            }
-
+            if (this.tabs.length === 0) { tabBtn.classList.add('active'); tabContent.classList.add('active'); }
             this.sidebar.appendChild(tabBtn);
             this.content.appendChild(tabContent);
             this.tabs.push({ btn: tabBtn, content: tabContent });
-
             return new Tab(tabContent);
         }
     }
 
     class Tab {
-        constructor(container) {
-            this.container = container;
-        }
-
+        constructor(container) { this.container = container; }
         addSection(text) {
-            const label = document.createElement('div');
-            label.className = 'ui-lib-section-label';
-            label.innerText = text;
-            this.container.appendChild(label);
+            const label = document.createElement('div'); label.className = 'ui-lib-section-label'; label.innerText = text; this.container.appendChild(label);
         }
-
         addLabel(text) {
-            const label = document.createElement('div');
-            label.className = 'ui-lib-label-element';
-            label.innerText = text;
-            this.container.appendChild(label);
-            return { update: (newText) => label.innerText = newText };
+            const label = document.createElement('div'); label.className = 'ui-lib-label-element'; label.innerText = text; this.container.appendChild(label);
+            return { update: (t) => label.innerText = t };
         }
-
         addParagraph(title, content) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'ui-lib-paragraph';
+            const wrapper = document.createElement('div'); wrapper.className = 'ui-lib-paragraph';
             wrapper.innerHTML = `<span class="ui-lib-paragraph-title">${title}</span><span class="ui-lib-paragraph-content">${content}</span>`;
             this.container.appendChild(wrapper);
-            return {
-                update: (newTitle, newContent) => {
-                    wrapper.querySelector('.ui-lib-paragraph-title').innerText = newTitle;
-                    wrapper.querySelector('.ui-lib-paragraph-content').innerText = newContent;
-                }
-            };
+            return { update: (t, c) => { wrapper.querySelector('.ui-lib-paragraph-title').innerText = t; wrapper.querySelector('.ui-lib-paragraph-content').innerText = c; } };
         }
-
         addButton(text, callback) {
-            const btn = document.createElement('button');
-            btn.className = 'ui-lib-button';
-            btn.innerText = text;
-            btn.onclick = () => callback();
-            this.container.appendChild(btn);
-            return { update: (n) => btn.innerText = n };
+            const btn = document.createElement('button'); btn.className = 'ui-lib-button'; btn.innerText = text;
+            btn.onclick = () => callback(); this.container.appendChild(btn); return { update: (n) => btn.innerText = n };
         }
-
         addToggle(text, defaultValue, callback) {
             let active = defaultValue || false;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'ui-lib-toggle' + (active ? ' active' : '');
+            const wrapper = document.createElement('div'); wrapper.className = 'ui-lib-toggle' + (active ? ' active' : '');
             wrapper.innerHTML = `<span class="ui-lib-toggle-label">${text}</span><div class="ui-lib-toggle-box"><div class="ui-lib-toggle-circle"></div></div>`;
-            wrapper.onclick = () => {
-                active = !active;
-                wrapper.classList.toggle('active', active);
-                if (callback) callback(active);
-            };
-            this.container.appendChild(wrapper);
-            return { update: (val) => { active = val; wrapper.classList.toggle('active', active); callback(active); }, get: () => active };
+            wrapper.onclick = () => { active = !active; wrapper.classList.toggle('active', active); if (callback) callback(active); };
+            this.container.appendChild(wrapper); return { update: (val) => { active = val; wrapper.classList.toggle('active', active); callback(active); }, get: () => active };
         }
-
         addSlider(text, min, max, defaultValue, callback) {
             let value = defaultValue;
-            const container = document.createElement('div');
-            container.className = 'ui-lib-slider-container';
+            const container = document.createElement('div'); container.className = 'ui-lib-slider-container';
             container.innerHTML = `<div class="ui-lib-slider-header"><span>${text}</span><span class="val-display">${value}</span></div><div class="ui-lib-slider-bg"><div class="ui-lib-slider-fill" style="width: ${((value - min) / (max - min)) * 100}%"></div></div>`;
-            const bg = container.querySelector('.ui-lib-slider-bg');
-            const fill = container.querySelector('.ui-lib-slider-fill');
-            const display = container.querySelector('.val-display');
-
+            const bg = container.querySelector('.ui-lib-slider-bg'); const fill = container.querySelector('.ui-lib-slider-fill'); const display = container.querySelector('.val-display');
             const updateSlider = (e) => {
-                const rect = bg.getBoundingClientRect();
-                let x = e.clientX - rect.left;
+                const rect = bg.getBoundingClientRect(); let x = e.clientX - rect.left;
                 if (x < 0) x = 0; if (x > rect.width) x = rect.width;
-                const percent = (x / rect.width);
-                value = Math.round(min + (max - min) * percent);
-                fill.style.width = `${percent * 100}%`;
-                display.innerText = value;
-                if (callback) callback(value);
+                const percent = (x / rect.width); value = Math.round(min + (max - min) * percent);
+                fill.style.width = `${percent * 100}%`; display.innerText = value; if (callback) callback(value);
             };
-
             let isDragging = false;
             bg.addEventListener('mousedown', (e) => { isDragging = true; updateSlider(e); });
             document.addEventListener('mousemove', (e) => { if (isDragging) updateSlider(e); });
             document.addEventListener('mouseup', () => { isDragging = false; });
-
-            this.container.appendChild(container);
-            return { update: (val) => { value = val; fill.style.width = `${((value - min) / (max - min)) * 100}%`; display.innerText = value; callback(value); }, get: () => value };
+            this.container.appendChild(container); return { update: (val) => { value = val; fill.style.width = `${((value - min) / (max - min)) * 100}%`; display.innerText = value; callback(value); }, get: () => value };
         }
-
         addInput(placeholder, defaultValue, callback) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'ui-lib-input-wrapper';
-            const input = document.createElement('input');
-            input.className = 'ui-lib-input';
-            input.placeholder = placeholder;
-            input.value = defaultValue || "";
-            input.oninput = () => callback(input.value);
-            wrapper.appendChild(input);
-            this.container.appendChild(wrapper);
+            const wrapper = document.createElement('div'); wrapper.className = 'ui-lib-input-wrapper';
+            const input = document.createElement('input'); input.className = 'ui-lib-input'; input.placeholder = placeholder; input.value = defaultValue || "";
+            input.oninput = () => callback(input.value); wrapper.appendChild(input); this.container.appendChild(wrapper);
             return { update: (val) => input.value = val, get: () => input.value };
         }
-
         addDropdown(text, options, callback) {
-            const container = document.createElement('div');
-            container.className = 'ui-lib-dropdown';
-            let current = options[0];
-            const btn = document.createElement('button');
-            btn.className = 'ui-lib-dropdown-btn';
-            btn.innerHTML = `${text}: ${current} <span class="ui-lib-dropdown-icon">▼</span>`;
-            const list = document.createElement('div');
-            list.className = 'ui-lib-dropdown-list';
+            const container = document.createElement('div'); container.className = 'ui-lib-dropdown'; let current = options[0];
+            const btn = document.createElement('button'); btn.className = 'ui-lib-dropdown-btn'; btn.innerHTML = `${text}: ${current} <span class="ui-lib-dropdown-icon">▼</span>`;
+            const list = document.createElement('div'); list.className = 'ui-lib-dropdown-list';
             const renderOptions = (opts) => {
-                list.innerHTML = '';
-                opts.forEach(opt => {
-                    const item = document.createElement('div');
-                    item.className = 'ui-lib-dropdown-item';
-                    item.innerText = opt;
-                    item.onclick = () => {
-                        current = opt;
-                        btn.innerHTML = `${text}: ${current} <span class="ui-lib-dropdown-icon">▼</span>`;
-                        list.classList.remove('open');
-                        callback(current);
-                    };
+                list.innerHTML = ''; opts.forEach(opt => {
+                    const item = document.createElement('div'); item.className = 'ui-lib-dropdown-item'; item.innerText = opt;
+                    item.onclick = () => { current = opt; btn.innerHTML = `${text}: ${current} <span class="ui-lib-dropdown-icon">▼</span>`; list.classList.remove('open'); callback(current); };
                     list.appendChild(item);
                 });
             };
             renderOptions(options);
             btn.onclick = (e) => { e.stopPropagation(); list.classList.toggle('open'); };
             document.addEventListener('click', (e) => { if(!container.contains(e.target)) list.classList.remove('open'); });
-            container.appendChild(btn);
-            container.appendChild(list);
-            this.container.appendChild(container);
+            container.appendChild(btn); container.appendChild(list); this.container.appendChild(container);
             return { update: (newOpts) => { renderOptions(newOpts); if(newOpts.length) current = newOpts[0]; }, get: () => current };
         }
-
         addColorPicker(text, defaultColor, callback) {
-            const container = document.createElement('div');
-            container.className = 'ui-lib-color-picker';
-            const label = document.createElement('span');
-            label.className = 'ui-lib-color-label';
-            label.innerText = text;
-            const input = document.createElement('input');
-            input.type = 'color';
-            input.className = 'ui-lib-color-input';
-            input.value = defaultColor || "#ffffff";
-            input.oninput = () => callback(input.value);
-            container.appendChild(label);
-            container.appendChild(input);
-            this.container.appendChild(container);
+            const container = document.createElement('div'); container.className = 'ui-lib-color-picker';
+            const label = document.createElement('span'); label.className = 'ui-lib-color-label'; label.innerText = text;
+            const input = document.createElement('input'); input.type = 'color'; input.className = 'ui-lib-color-input'; input.value = defaultColor || "#ffffff";
+            input.oninput = () => callback(input.value); container.appendChild(label); container.appendChild(input); this.container.appendChild(container);
             return { update: (col) => input.value = col, get: () => input.value };
         }
     }
 
-    // Assign to window
     window.Library = UILibrary;
 })();
